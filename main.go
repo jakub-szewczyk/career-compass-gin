@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jakub-szewczyk/career-compass-gin/api/routes"
-	"github.com/jakub-szewczyk/career-compass-gin/db"
+	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 	"github.com/joho/godotenv"
 )
 

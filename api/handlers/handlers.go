@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 
-	"github.com/jakub-szewczyk/career-compass-gin/db"
+	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 )
 
 type Handler struct {

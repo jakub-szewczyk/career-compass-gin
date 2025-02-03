@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jakub-szewczyk/career-compass-gin/api/handlers"
-	"github.com/jakub-szewczyk/career-compass-gin/db"
+	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 )
 
 func Setup(ctx context.Context, queries *db.Queries) *gin.Engine {
@@ -13,9 +13,16 @@ func Setup(ctx context.Context, queries *db.Queries) *gin.Engine {
 
 	h := handlers.NewHandler(ctx, queries)
 
-	r.GET("/health-check", h.HealthCheck)
+	// NOTE: Root routes
+	api := r.Group("/api")
 
-	r.GET("/users", h.GetAllUsers)
+	api.GET("/health-check", h.HealthCheck)
+
+	// NOTE: Auth routes
+	auth := api.Group("/auth")
+
+	auth.POST("/sign-up", h.SignUp)
+	// auth.POST("/sign-in", h.SignIn)
 
 	return r
 }
