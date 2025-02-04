@@ -8,10 +8,10 @@ import (
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 )
 
-func Setup(ctx context.Context, queries *db.Queries) *gin.Engine {
+func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engine {
 	r := gin.Default()
 
-	h := handlers.NewHandler(ctx, queries)
+	h := handlers.NewHandler(ctx, env, queries)
 
 	// NOTE: Root routes
 	api := r.Group("/api")
@@ -19,10 +19,8 @@ func Setup(ctx context.Context, queries *db.Queries) *gin.Engine {
 	api.GET("/health-check", h.HealthCheck)
 
 	// NOTE: Auth routes
-	auth := api.Group("/auth")
-
-	auth.POST("/sign-up", h.SignUp)
-	// auth.POST("/sign-in", h.SignIn)
+	api.POST("/sign-up", h.SignUp)
+	api.POST("/sign-in", h.SignIn)
 
 	return r
 }
