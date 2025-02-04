@@ -13,14 +13,18 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 
 	h := handlers.NewHandler(ctx, env, queries)
 
-	// NOTE: Root routes
 	api := r.Group("/api")
 
+	// NOTE: Public rotues
 	api.GET("/health-check", h.HealthCheck)
 
-	// NOTE: Auth routes
 	api.POST("/sign-up", h.SignUp)
 	api.POST("/sign-in", h.SignIn)
+
+	// NOTE: Private routes
+	api.Use(h.Auth())
+
+	api.GET("/profile", h.Profile)
 
 	return r
 }
