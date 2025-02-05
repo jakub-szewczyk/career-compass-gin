@@ -15,7 +15,7 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 
 	api := r.Group("/api")
 
-	// NOTE: Public rotues
+	// NOTE: Public routes
 	api.GET("/health-check", h.HealthCheck)
 
 	api.POST("/sign-up", h.SignUp)

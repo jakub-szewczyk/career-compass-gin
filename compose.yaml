@@ -1,17 +1,17 @@
 services:
-  # career-compass-gin-dev:
-  #   build:
-  #     context: .
-  #   container_name: career-compass-gin-dev
-  #   env_file:
-  #     - .env.dev
-  #   environment:
-  #     - DATABASE_URL=postgres://career-compass-gin-dev:career-compass-gin-dev@postgres-dev:5432/career-compass-gin-dev
-  #   ports:
-  #     - 3000:3000
-  #   depends_on:
-  #     postgres-dev:
-  #       condition: service_healthy
+  career-compass-gin-dev:
+    build:
+      context: .
+      target: final
+    container_name: career-compass-gin-dev
+    env_file: .env.dev
+    environment:
+      - DATABASE_URL=postgres://career-compass-gin-dev:career-compass-gin-dev@postgres-dev:5432/career-compass-gin-dev
+    ports:
+      - 3000:3000
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
   postgres-dev:
     image: postgres
     restart: always

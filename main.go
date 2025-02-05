@@ -13,10 +13,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
+	godotenv.Load(".env.dev")
 
 	port := os.Getenv("PORT")
 	if port == "" {
