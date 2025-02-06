@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type signUpReqBody struct {
+type SignUpReqBody struct {
 	FirstName       string `json:"firstName" binding:"required"`
 	LastName        string `json:"lastName" binding:"required"`
 	Email           string `json:"email" binding:"required,email"`
@@ -18,13 +18,13 @@ type signUpReqBody struct {
 	ConfirmPassword string `json:"confirmPassword" binding:"required,eqfield=Password"`
 }
 
-type signUpResBody struct {
+type SignUpResBody struct {
 	User  db.CreateUserRow `json:"user"`
 	Token string           `json:"token"`
 }
 
 func (h *Handler) SignUp(c *gin.Context) {
-	var body signUpReqBody
+	var body SignUpReqBody
 
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -69,7 +69,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, signUpResBody{
+	c.JSON(http.StatusCreated, SignUpResBody{
 		User:  user,
 		Token: signed,
 	})
