@@ -30,6 +30,7 @@ func TestSignUp(t *testing.T) {
 	var resBodyRaw handlers.SignUpResBody
 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
+	// NOTE: Test response body
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	assert.NoError(t, err, "error unmarshaling response body")
@@ -42,5 +43,14 @@ func TestSignUp(t *testing.T) {
 
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 
-	// TODO: Test database for new entry
+	// NOTE: Test database entry
+	user, err := Queries.GetUserById(Ctx, resBodyRaw.User.ID)
+
+	assert.NoError(t, err, "error getting user from the database")
+
+	assert.NotEmpty(t, user.ID, "missing user id")
+
+	assert.Equal(t, "Jakub", user.FirstName)
+	assert.Equal(t, "Szewczyk", user.LastName)
+	assert.Equal(t, "jakub.szewczyk@test.com", user.Email)
 }
