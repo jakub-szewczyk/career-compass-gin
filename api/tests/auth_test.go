@@ -25,7 +25,7 @@ func TestSignUp(t *testing.T) {
 
 	req, _ := http.NewRequest("POST", "/api/sign-up", strings.NewReader(string(bodyJSON)))
 
-	R.ServeHTTP(w, req)
+	r.ServeHTTP(w, req)
 
 	var resBodyRaw handlers.SignUpResBody
 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
@@ -44,7 +44,7 @@ func TestSignUp(t *testing.T) {
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 
 	// NOTE: Test database entry
-	user, err := Queries.GetUserById(Ctx, resBodyRaw.User.ID)
+	user, err := queries.GetUserById(ctx, resBodyRaw.User.ID)
 
 	assert.NoError(t, err, "error getting user from the database")
 
@@ -53,4 +53,34 @@ func TestSignUp(t *testing.T) {
 	assert.Equal(t, "Jakub", user.FirstName)
 	assert.Equal(t, "Szewczyk", user.LastName)
 	assert.Equal(t, "jakub.szewczyk@test.com", user.Email)
+}
+
+func TestSignIn(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	bodyRaw := handlers.SignInReqBody{
+		Email:    "jakub.szewczyk@test.com",
+		Password: "qwerty!123456789",
+	}
+	bodyJSON, _ := json.Marshal(bodyRaw)
+
+	req, _ := http.NewRequest("POST", "/api/sign-in", strings.NewReader(string(bodyJSON)))
+
+	r.ServeHTTP(w, req)
+
+	var resBodyRaw handlers.SignInResBody
+	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+	// NOTE: Test response body
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	assert.NoError(t, err, "error unmarshaling response body")
+
+	assert.NotEmpty(t, resBodyRaw.User.ID, "missing user id")
+
+	assert.Equal(t, "Jakub", resBodyRaw.User.FirstName)
+	assert.Equal(t, "Szewczyk", resBodyRaw.User.LastName)
+	assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw.User.Email)
+
+	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 }

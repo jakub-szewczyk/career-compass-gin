@@ -13,7 +13,7 @@ func TestHealthCheck(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", "/api/health-check", nil)
 
-	R.ServeHTTP(w, req)
+	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `{"status":"healthy"}`)

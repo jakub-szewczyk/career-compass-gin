@@ -18,20 +18,19 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var R *gin.Engine
-
-var Ctx context.Context
-var Queries *db.Queries
+var r *gin.Engine
+var ctx context.Context
+var queries *db.Queries
 
 func TestMain(m *testing.M) {
-	Ctx = context.Background()
+	ctx = context.Background()
 
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("failed to obtain the current working directory: %s", err)
 	}
 
-	postgresContainer, err := postgres.Run(Ctx, "postgres", postgres.WithInitScripts(filepath.Join(dir, "..", "..", "sqlc", "schema.sql")), postgres.WithDatabase("career-compass-gin-test"), postgres.WithUsername("career-compass-gin-test"), postgres.WithPassword("career-compass-gin-test"), testcontainers.WithWaitStrategy(
+	postgresContainer, err := postgres.Run(ctx, "postgres", postgres.WithInitScripts(filepath.Join(dir, "..", "..", "sqlc", "schema.sql")), postgres.WithDatabase("career-compass-gin-test"), postgres.WithUsername("career-compass-gin-test"), postgres.WithPassword("career-compass-gin-test"), testcontainers.WithWaitStrategy(
 		wait.ForLog("database system is ready to accept connections").
 			WithOccurrence(2).
 			WithStartupTimeout(5*time.Second)),
@@ -46,20 +45,25 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	databaseURL, err := postgresContainer.ConnectionString(Ctx)
+	port, err := postgresContainer.MappedPort(ctx, "5432")
+	if err != nil {
+		log.Fatalf("failed to obtained mapped port: %s", err)
+	}
+
+	databaseURL, err := postgresContainer.ConnectionString(ctx)
 	if err != nil {
 		log.Fatalf("failed to obtain container connection string: %s", err)
 	}
 
-	conn, err := pgx.Connect(Ctx, databaseURL)
+	conn, err := pgx.Connect(ctx, databaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %s", err)
 	}
-	defer conn.Close(Ctx)
+	defer conn.Close(ctx)
 
-	Queries = db.New(conn)
+	queries = db.New(conn)
 
-	R = routes.Setup(Ctx, handlers.NewEnv("", databaseURL, ""), Queries)
+	r = routes.Setup(ctx, handlers.NewEnv(port.Port(), databaseURL, "testing"), queries)
 
 	code := m.Run()
 

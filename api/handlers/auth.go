@@ -75,18 +75,18 @@ func (h *Handler) SignUp(c *gin.Context) {
 	})
 }
 
-type signInReqBody struct {
+type SignInReqBody struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=16"` // TODO: Improve password strength
 }
 
-type signInResBody struct {
+type SignInResBody struct {
 	User  db.CreateUserRow `json:"user"`
 	Token string           `json:"token"`
 }
 
 func (h *Handler) SignIn(c *gin.Context) {
-	var body signInReqBody
+	var body SignInReqBody
 
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -125,7 +125,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, signInResBody{
+	c.JSON(http.StatusOK, SignInResBody{
 		User: db.CreateUserRow{
 			ID:        user.ID,
 			FirstName: user.FirstName,
