@@ -12,6 +12,8 @@ import (
 )
 
 func TestSignUp(t *testing.T) {
+	queries.Purge(ctx)
+
 	w := httptest.NewRecorder()
 
 	bodyRaw := handlers.SignUpReqBody{
@@ -30,10 +32,12 @@ func TestSignUp(t *testing.T) {
 	var resBodyRaw handlers.SignUpResBody
 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
-	// NOTE: Test response body
-	assert.Equal(t, http.StatusCreated, w.Code)
+	token = resBodyRaw.Token
 
+	// NOTE: Test response body
 	assert.NoError(t, err, "error unmarshaling response body")
+
+	assert.Equal(t, http.StatusCreated, w.Code)
 
 	assert.NotEmpty(t, resBodyRaw.User.ID, "missing user id")
 
@@ -56,6 +60,10 @@ func TestSignUp(t *testing.T) {
 }
 
 func TestSignIn(t *testing.T) {
+	queries.Purge(ctx)
+
+	TestSignUp(t)
+
 	w := httptest.NewRecorder()
 
 	bodyRaw := handlers.SignInReqBody{
@@ -72,9 +80,9 @@ func TestSignIn(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
 	// NOTE: Test response body
-	assert.Equal(t, http.StatusOK, w.Code)
-
 	assert.NoError(t, err, "error unmarshaling response body")
+
+	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.NotEmpty(t, resBodyRaw.User.ID, "missing user id")
 

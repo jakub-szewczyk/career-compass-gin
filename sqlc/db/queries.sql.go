@@ -93,3 +93,12 @@ func (q *Queries) GetUserOnSignIn(ctx context.Context, email string) (GetUserOnS
 	)
 	return i, err
 }
+
+const purge = `-- name: Purge :exec
+TRUNCATE TABLE users
+`
+
+func (q *Queries) Purge(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, purge)
+	return err
+}

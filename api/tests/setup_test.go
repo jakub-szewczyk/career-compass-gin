@@ -20,6 +20,7 @@ import (
 
 var r *gin.Engine
 var ctx context.Context
+var token string
 var queries *db.Queries
 
 func TestMain(m *testing.M) {
