@@ -30,6 +30,36 @@ func main() {
 		log.Fatal("missing env var: JWT_SECRET")
 	}
 
+	smtpIdentity := os.Getenv("SMTP_IDENTITY")
+	if smtpIdentity == "" {
+		log.Fatal("missing env var: SMTP_IDENTITY")
+	}
+
+	smtpUsername := os.Getenv("SMTP_USERNAME")
+	if smtpUsername == "" {
+		log.Fatal("missing env var: SMTP_USERNAME")
+	}
+
+	smtpPassword := os.Getenv("SMTP_PASSWORD")
+	if smtpPassword == "" {
+		log.Fatal("missing env var: SMTP_PASSWORD")
+	}
+
+	smtpHost := os.Getenv("SMTP_HOST")
+	if smtpHost == "" {
+		log.Fatal("missing env var: SMTP_HOST")
+	}
+
+	smtpPort := os.Getenv("SMTP_PORT")
+	if smtpPort == "" {
+		log.Fatal("missing env var: SMTP_PORT")
+	}
+
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		log.Fatal("missing env var: FRONTEND_URL")
+	}
+
 	ctx := context.Background()
 
 	conn, err := pgx.Connect(ctx, databaseURL)
@@ -40,7 +70,7 @@ func main() {
 
 	queries := db.New(conn)
 
-	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret), queries)
+	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL), queries)
 
 	err = r.Run(":" + port)
 	if err != nil {

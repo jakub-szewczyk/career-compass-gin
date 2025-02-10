@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 
 	queries = db.New(conn)
 
-	r = routes.Setup(ctx, handlers.NewEnv(port.Port(), databaseURL, "testing"), queries)
+	r = routes.Setup(ctx, handlers.NewEnv(port.Port(), databaseURL, "testing", "", "", "", "", "", ""), queries)
 
 	code := m.Run()
 

@@ -12,7 +12,13 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4) RETURNING id, first_name, last_name, email
+INSERT INTO users (first_name, last_name, email, password)
+VALUES (
+  UPPER(LEFT($1::text, 1)) || LOWER(SUBSTRING($1::text FROM 2)),
+  UPPER(LEFT($2::text, 1)) || LOWER(SUBSTRING($2::text FROM 2)),
+  $3::text,
+  $4::text
+) RETURNING id, first_name, last_name, email
 `
 
 type CreateUserParams struct {

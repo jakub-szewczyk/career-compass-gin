@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Inter"
+      rel="stylesheet"
+    />
+    <title>Welcome to Career Compass, {{.FirstName}}!</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #f1f5f9;
+      font-family: Inter, sans-serif;
+    "
+  >
+    <div
+      style="
+        max-width: 600px;
+        margin: 24px auto 0 auto;
+        padding: 24px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        text-align: center;
+      "
+    >
+      <h1 style="margin-top: 0; font-size: 20px; font-weight: bold">
+        Welcome to Career Compass, {{.FirstName}}!
+      </h1>
+      <p style="margin: 24px 0; font-size: 14px">
+        Thank you for signing up for our service. Click the link below to verify
+        your email:
+      </p>
+      <p style="margin: 32px 0; font-size: 16px">
+        <a
+          style="
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: #064e3b;
+            font-size: 14px;
+            color: #fff;
+            text-decoration: none;
+          "
+          href="{{.Link}}"
+          >Verify Email</a
+        >
+      </p>
+      <p style="margin: 24px 0; font-size: 14px">
+        If you didn't request this, please ignore this email.
+      </p>
+      <p style="margin-bottom: 0; font-size: 12px; color: #64748b">
+        © {{.Year}} Career Compass
+      </p>
+    </div>
+  </body>
+</html>

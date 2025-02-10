@@ -29,6 +29,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  mailhog-dev:
+    image: mailhog/mailhog
+    container_name: mailhog-dev
+    ports:
+      - 1025:1025
+      - 8025:8025
 
 volumes:
   career-compass-gin-dev:

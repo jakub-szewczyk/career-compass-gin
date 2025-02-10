@@ -1,7 +1,12 @@
 package handlers
 
 import (
+	"bytes"
+	"fmt"
+	"html/template"
 	"net/http"
+	"net/smtp"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -73,6 +78,36 @@ func (h *Handler) SignUp(c *gin.Context) {
 		User:  user,
 		Token: signed,
 	})
+
+	tmpl, err := template.ParseFiles(filepath.Join("email", "sign-up.html"))
+	if err != nil {
+		fmt.Println("error loading template:", err)
+		return
+	}
+
+	var html bytes.Buffer
+	if err := tmpl.Execute(&html, struct {
+		FirstName string
+		Link      string
+		Year      int
+	}{
+		FirstName: user.FirstName,
+		Link:      h.env.FrontendURL,
+		Year:      time.Now().Year(),
+	}); err != nil {
+		fmt.Println("error rendering template:", err)
+		return
+	}
+
+	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	subject := fmt.Sprintf("Subject: Welcome to Career Compass, %v!\n", user.FirstName)
+
+	auth := smtp.PlainAuth(h.env.SMTPIdentity, h.env.SMTPUsername, h.env.SMTPPassword, h.env.SMTPHost)
+	err = smtp.SendMail(h.env.SMTPHost+":"+h.env.SMTPPORT, auth, h.env.SMTPUsername, []string{user.Email}, []byte(subject+mime+html.String()))
+	if err != nil {
+		fmt.Println("error sending email:", err)
+		return
+	}
 }
 
 type SignInReqBody struct {
