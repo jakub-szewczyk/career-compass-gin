@@ -79,7 +79,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 		Token: signed,
 	})
 
-	tmpl, err := template.ParseFiles(filepath.Join("email", "sign-up.html"))
+	tmpl, err := template.ParseFiles(filepath.Join("templates", "sign-up.html"))
 	if err != nil {
 		fmt.Println("error loading template:", err)
 		return

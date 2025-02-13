@@ -25,6 +25,7 @@ go.work.sum
 .env
 .env.dev
 .env.test
+.env.prod
 
 # other
 tmp
