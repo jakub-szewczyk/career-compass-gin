@@ -60,6 +60,11 @@ func main() {
 		log.Fatal("missing env var: FRONTEND_URL")
 	}
 
+	emailVerificationUrl := os.Getenv("EMAIL_VERIFICATION_URL")
+	if emailVerificationUrl == "" {
+		log.Fatal("missing env var: EMAIL_VERIFICATION_URL")
+	}
+
 	ctx := context.Background()
 
 	conn, err := pgx.Connect(ctx, databaseURL)
@@ -70,7 +75,7 @@ func main() {
 
 	queries := db.New(conn)
 
-	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL), queries)
+	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL, emailVerificationUrl), queries)
 
 	err = r.Run(":" + port)
 	if err != nil {

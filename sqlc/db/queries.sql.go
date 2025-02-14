@@ -12,13 +12,27 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (first_name, last_name, email, password)
-VALUES (
-  UPPER(LEFT($1::text, 1)) || LOWER(SUBSTRING($1::text FROM 2)),
-  UPPER(LEFT($2::text, 1)) || LOWER(SUBSTRING($2::text FROM 2)),
-  $3::text,
-  $4::text
-) RETURNING id, first_name, last_name, email
+WITH new_user AS (
+  INSERT INTO users (first_name, last_name, email, password)
+  VALUES (
+    UPPER(LEFT($1::text, 1)) || LOWER(SUBSTRING($1::text FROM 2)),
+    UPPER(LEFT($2::text, 1)) || LOWER(SUBSTRING($2::text FROM 2)),
+    $3::text,
+    $4::text
+  )
+  RETURNING id, first_name, last_name, email, is_email_verified
+),
+new_token AS (
+  INSERT INTO verification_tokens (user_id) SELECT id FROM new_user RETURNING token
+)
+SELECT 
+  new_user.id,
+  new_user.first_name,
+  new_user.last_name,
+  new_user.email,
+  new_user.is_email_verified,
+  new_token.token as verification_token
+FROM new_user, new_token
 `
 
 type CreateUserParams struct {
@@ -29,10 +43,12 @@ type CreateUserParams struct {
 }
 
 type CreateUserRow struct {
-	ID        pgtype.UUID `json:"id"`
-	FirstName string      `json:"firstName"`
-	LastName  string      `json:"lastName"`
-	Email     string      `json:"email"`
+	ID                pgtype.UUID `json:"id"`
+	FirstName         string      `json:"firstName"`
+	LastName          string      `json:"lastName"`
+	Email             string      `json:"email"`
+	IsEmailVerified   pgtype.Bool `json:"isEmailVerified"`
+	VerificationToken string      `json:"verificationToken"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
@@ -48,19 +64,26 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
+		&i.IsEmailVerified,
+		&i.VerificationToken,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, first_name, last_name, email FROM users where id = $1
+SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token AS verification_token
+FROM users AS u
+JOIN verification_tokens AS v ON u.id = v.user_id
+WHERE u.id = $1
 `
 
 type GetUserByIdRow struct {
-	ID        pgtype.UUID `json:"id"`
-	FirstName string      `json:"firstName"`
-	LastName  string      `json:"lastName"`
-	Email     string      `json:"email"`
+	ID                pgtype.UUID `json:"id"`
+	FirstName         string      `json:"firstName"`
+	LastName          string      `json:"lastName"`
+	Email             string      `json:"email"`
+	IsEmailVerified   pgtype.Bool `json:"isEmailVerified"`
+	VerificationToken string      `json:"verificationToken"`
 }
 
 func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdRow, error) {
@@ -71,20 +94,27 @@ func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdR
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
+		&i.IsEmailVerified,
+		&i.VerificationToken,
 	)
 	return i, err
 }
 
 const getUserOnSignIn = `-- name: GetUserOnSignIn :one
-SELECT id, first_name, last_name, email, password FROM users WHERE email = $1
+SELECT u.id, u.first_name, u.last_name, u.email, u.password, u.is_email_verified, v.token AS verification_token
+FROM users AS u
+JOIN verification_tokens AS v ON u.id = v.user_id
+WHERE email = $1
 `
 
 type GetUserOnSignInRow struct {
-	ID        pgtype.UUID `json:"id"`
-	FirstName string      `json:"firstName"`
-	LastName  string      `json:"lastName"`
-	Email     string      `json:"email"`
-	Password  string      `json:"password"`
+	ID                pgtype.UUID `json:"id"`
+	FirstName         string      `json:"firstName"`
+	LastName          string      `json:"lastName"`
+	Email             string      `json:"email"`
+	Password          string      `json:"password"`
+	IsEmailVerified   pgtype.Bool `json:"isEmailVerified"`
+	VerificationToken string      `json:"verificationToken"`
 }
 
 func (q *Queries) GetUserOnSignIn(ctx context.Context, email string) (GetUserOnSignInRow, error) {
@@ -96,6 +126,8 @@ func (q *Queries) GetUserOnSignIn(ctx context.Context, email string) (GetUserOnS
 		&i.LastName,
 		&i.Email,
 		&i.Password,
+		&i.IsEmailVerified,
+		&i.VerificationToken,
 	)
 	return i, err
 }

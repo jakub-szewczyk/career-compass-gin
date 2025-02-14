@@ -92,7 +92,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 		Year      int
 	}{
 		FirstName: user.FirstName,
-		Link:      h.env.FrontendURL,
+		Link:      h.env.EmailVerificationUrl,
 		Year:      time.Now().Year(),
 	}); err != nil {
 		fmt.Println("error rendering template:", err)
@@ -162,10 +162,12 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 	c.JSON(http.StatusOK, SignInResBody{
 		User: db.CreateUserRow{
-			ID:        user.ID,
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Email:     user.Email,
+			ID:                user.ID,
+			FirstName:         user.FirstName,
+			LastName:          user.LastName,
+			Email:             user.Email,
+			IsEmailVerified:   user.IsEmailVerified,
+			VerificationToken: user.VerificationToken,
 		},
 		Token: signed,
 	})
