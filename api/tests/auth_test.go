@@ -40,11 +40,11 @@ func TestSignUp(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	assert.NotEmpty(t, resBodyRaw.User.ID, "missing user id")
-
 	assert.Equal(t, "Jakub", resBodyRaw.User.FirstName)
 	assert.Equal(t, "Szewczyk", resBodyRaw.User.LastName)
 	assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw.User.Email)
-
+	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified.Bool)
+	assert.NotEmpty(t, resBodyRaw.User.VerificationToken, "missing email verification token")
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 
 	// NOTE: Test database entry
@@ -53,10 +53,11 @@ func TestSignUp(t *testing.T) {
 	assert.NoError(t, err, "error getting user from the database")
 
 	assert.NotEmpty(t, user.ID, "missing user id")
-
 	assert.Equal(t, "Jakub", user.FirstName)
 	assert.Equal(t, "Szewczyk", user.LastName)
 	assert.Equal(t, "jakub.szewczyk@test.com", user.Email)
+	assert.Equal(t, false, user.IsEmailVerified.Bool)
+	assert.NotEmpty(t, user.VerificationToken, "missing email verification token")
 }
 
 func TestSignIn(t *testing.T) {
@@ -85,10 +86,10 @@ func TestSignIn(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.NotEmpty(t, resBodyRaw.User.ID, "missing user id")
-
 	assert.Equal(t, "Jakub", resBodyRaw.User.FirstName)
 	assert.Equal(t, "Szewczyk", resBodyRaw.User.LastName)
 	assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw.User.Email)
-
+	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified.Bool)
+	assert.NotEmpty(t, resBodyRaw.User.VerificationToken, "missing email verification token")
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 }

@@ -31,10 +31,11 @@ func TestProfile(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.NotEmpty(t, resBodyRaw1.ID, "missing user id")
-
 	assert.Equal(t, "Jakub", resBodyRaw1.FirstName)
 	assert.Equal(t, "Szewczyk", resBodyRaw1.LastName)
 	assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw1.Email)
+	assert.Equal(t, false, resBodyRaw1.IsEmailVerified.Bool)
+	assert.NotEmpty(t, resBodyRaw1.VerificationToken, "missing email verification token")
 
 	// NOTE: Test missing Authorization token
 	w = httptest.NewRecorder()

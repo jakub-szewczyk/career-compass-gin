@@ -133,7 +133,7 @@ func (q *Queries) GetUserOnSignIn(ctx context.Context, email string) (GetUserOnS
 }
 
 const purge = `-- name: Purge :exec
-TRUNCATE TABLE users
+TRUNCATE TABLE users, verification_tokens
 `
 
 func (q *Queries) Purge(ctx context.Context) error {
