@@ -5,10 +5,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jakub-szewczyk/career-compass-gin/api/handlers"
+	"github.com/jakub-szewczyk/career-compass-gin/docs"
+	_ "github.com/jakub-szewczyk/career-compass-gin/docs"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
+	"github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
 )
 
+// @title		Career Compass REST API
+// @BasePath	/api
 func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engine {
+	// TODO: Read from env vars
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Host = "localhost:" + env.Port
+
 	r := gin.Default()
 
 	h := handlers.NewHandler(ctx, env, queries)
@@ -16,6 +26,8 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 	api := r.Group("/api")
 
 	// NOTE: Public routes
+	api.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	api.GET("/health-check", h.HealthCheck)
 
 	api.POST("/sign-up", h.SignUp)

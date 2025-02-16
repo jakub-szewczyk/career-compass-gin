@@ -11,25 +11,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jakub-szewczyk/career-compass-gin/api/models"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type SignUpReqBody struct {
-	FirstName       string `json:"firstName" binding:"required"`
-	LastName        string `json:"lastName" binding:"required"`
-	Email           string `json:"email" binding:"required,email"`
-	Password        string `json:"password" binding:"required,min=16"` // TODO: Improve password strength
-	ConfirmPassword string `json:"confirmPassword" binding:"required,eqfield=Password"`
-}
-
-type SignUpResBody struct {
-	User  db.CreateUserRow `json:"user"`
-	Token string           `json:"token"`
-}
-
+// SignUp godoc
+//
+//	@Summary		User sign up
+//	@Description	Registers a new user account with the provided details, including email, password, and other relevant information. Verification email will be sent.
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.SignUpReqBody	true	"User sign up data"
+//	@Failure		400		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Success		201		{object}	models.SignUpResBody
+//	@Router			/sign-up [post]
 func (h *Handler) SignUp(c *gin.Context) {
-	var body SignUpReqBody
+	var body models.SignUpReqBody
 
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -74,10 +74,15 @@ func (h *Handler) SignUp(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, SignUpResBody{
-		User:  user,
-		Token: signed,
-	})
+	signUpResBody, err := models.NewSignUpResBody(user, signed)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, signUpResBody)
 
 	tmpl, err := template.ParseFiles(filepath.Join("templates", "sign-up.html"))
 	if err != nil {
@@ -110,18 +115,21 @@ func (h *Handler) SignUp(c *gin.Context) {
 	}
 }
 
-type SignInReqBody struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=16"` // TODO: Improve password strength
-}
-
-type SignInResBody struct {
-	User  db.CreateUserRow `json:"user"`
-	Token string           `json:"token"`
-}
-
+// SignIn godoc
+//
+//	@Summary		User sign in
+//	@Description	Authenticates a user and returns a JWT token for session management. Valid credentials are required to access the system.
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.SignInReqBody	true	"User sign in data"
+//	@Failure		400		{object}	models.Error
+//	@Failure		401		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Success		200		{object}	models.SignInResBody
+//	@Router			/sign-in [post]
 func (h *Handler) SignIn(c *gin.Context) {
-	var body SignInReqBody
+	var body models.SignInReqBody
 
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -160,15 +168,13 @@ func (h *Handler) SignIn(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SignInResBody{
-		User: db.CreateUserRow{
-			ID:                user.ID,
-			FirstName:         user.FirstName,
-			LastName:          user.LastName,
-			Email:             user.Email,
-			IsEmailVerified:   user.IsEmailVerified,
-			VerificationToken: user.VerificationToken,
-		},
-		Token: signed,
-	})
+	signInResBody, err := models.NewSignInResBody(user, signed)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, signInResBody)
 }

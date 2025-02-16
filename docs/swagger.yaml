@@ -1,0 +1,198 @@
+basePath: /api
+definitions:
+  models.Error:
+    properties:
+      error:
+        type: string
+    type: object
+  models.HealthCheckResBody:
+    properties:
+      status:
+        example: healthy
+        type: string
+    type: object
+  models.ProfileResBody:
+    properties:
+      email:
+        example: john.doe@example.com
+        type: string
+      firstName:
+        example: John
+        type: string
+      id:
+        example: f4d15edc-e780-42b5-957d-c4352401d9ca
+        type: string
+      isEmailVerified:
+        example: true
+        type: boolean
+      lastName:
+        example: Doe
+        type: string
+      verificationToken:
+        example: 2cc313c8b72f8e5b725e07130d0b851811f2e60c8b19f085b3aa58d1516ef767
+        type: string
+    type: object
+  models.SignInReqBody:
+    properties:
+      email:
+        example: john.doe@example.com
+        type: string
+      password:
+        description: 'TODO: Improve password strength'
+        example: qwerty!123456789
+        minLength: 16
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.SignInResBody:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/models.ProfileResBody'
+    type: object
+  models.SignUpReqBody:
+    properties:
+      confirmPassword:
+        example: qwerty!123456789
+        type: string
+      email:
+        example: john.doe@example.com
+        type: string
+      firstName:
+        example: John
+        type: string
+      lastName:
+        example: Doe
+        type: string
+      password:
+        description: 'TODO: Improve password strength'
+        example: qwerty!123456789
+        minLength: 16
+        type: string
+    required:
+    - confirmPassword
+    - email
+    - firstName
+    - lastName
+    - password
+    type: object
+  models.SignUpResBody:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mzk4MDQ1NTEsInN1YiI6ImpvaG4uZG9lQGdtYWlsLmNvbSIsInVpZCI6IjZiZTA1YTcyLTc5OGQtNGI3Ny1iOGQzLTc3MjNhN2JmM2FkYSJ9.5sj2fHB3pky3N6-mDgaPQCQA0gkEz4oQsdtVEC9BLqE
+        type: string
+      user:
+        $ref: '#/definitions/models.ProfileResBody'
+    type: object
+info:
+  contact: {}
+  title: Career Compass REST API
+paths:
+  /health-check:
+    get:
+      description: Returns the health status of the service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.HealthCheckResBody'
+      summary: Health check
+      tags:
+      - Health check
+  /profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves and returns the profile information of the currently
+        authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProfileResBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Get user profile
+      tags:
+      - Profile
+  /sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token for session management.
+        Valid credentials are required to access the system.
+      parameters:
+      - description: User sign in data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignInReqBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SignInResBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: User sign in
+      tags:
+      - Auth
+  /sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user account with the provided details, including
+        email, password, and other relevant information. Verification email will be
+        sent.
+      parameters:
+      - description: User sign up data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignUpReqBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.SignUpResBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: User sign up
+      tags:
+      - Auth
+swagger: "2.0"

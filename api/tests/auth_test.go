@@ -7,7 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jakub-szewczyk/career-compass-gin/api/handlers"
+	"github.com/jakub-szewczyk/career-compass-gin/api/models"
+	common "github.com/jakub-szewczyk/career-compass-gin/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,20 +17,14 @@ func TestSignUp(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	bodyRaw := handlers.SignUpReqBody{
-		FirstName:       "Jakub",
-		LastName:        "Szewczyk",
-		Email:           "jakub.szewczyk@test.com",
-		Password:        "qwerty!123456789",
-		ConfirmPassword: "qwerty!123456789",
-	}
+	bodyRaw := models.NewSignUpReqBody("Jakub", "Szewczyk", "jakub.szewczyk@test.com", "qwerty!123456789", "qwerty!123456789")
 	bodyJSON, _ := json.Marshal(bodyRaw)
 
 	req, _ := http.NewRequest("POST", "/api/sign-up", strings.NewReader(string(bodyJSON)))
 
 	r.ServeHTTP(w, req)
 
-	var resBodyRaw handlers.SignUpResBody
+	var resBodyRaw models.SignUpResBody
 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
 	token = resBodyRaw.Token
@@ -43,12 +38,13 @@ func TestSignUp(t *testing.T) {
 	assert.Equal(t, "Jakub", resBodyRaw.User.FirstName)
 	assert.Equal(t, "Szewczyk", resBodyRaw.User.LastName)
 	assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw.User.Email)
-	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified.Bool)
+	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified)
 	assert.NotEmpty(t, resBodyRaw.User.VerificationToken, "missing email verification token")
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 
 	// NOTE: Test database entry
-	user, err := queries.GetUserById(ctx, resBodyRaw.User.ID)
+	uuid, _ := common.ToUUID(resBodyRaw.User.ID)
+	user, err := queries.GetUserById(ctx, uuid)
 
 	assert.NoError(t, err, "error getting user from the database")
 
@@ -67,17 +63,14 @@ func TestSignIn(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	bodyRaw := handlers.SignInReqBody{
-		Email:    "jakub.szewczyk@test.com",
-		Password: "qwerty!123456789",
-	}
+	bodyRaw := models.NewSignInReqBody("jakub.szewczyk@test.com", "qwerty!123456789")
 	bodyJSON, _ := json.Marshal(bodyRaw)
 
 	req, _ := http.NewRequest("POST", "/api/sign-in", strings.NewReader(string(bodyJSON)))
 
 	r.ServeHTTP(w, req)
 
-	var resBodyRaw handlers.SignInResBody
+	var resBodyRaw models.SignInResBody
 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
 	// NOTE: Test response body
@@ -89,7 +82,7 @@ func TestSignIn(t *testing.T) {
 	assert.Equal(t, "Jakub", resBodyRaw.User.FirstName)
 	assert.Equal(t, "Szewczyk", resBodyRaw.User.LastName)
 	assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw.User.Email)
-	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified.Bool)
+	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified)
 	assert.NotEmpty(t, resBodyRaw.User.VerificationToken, "missing email verification token")
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 }
