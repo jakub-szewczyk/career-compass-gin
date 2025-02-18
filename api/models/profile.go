@@ -16,7 +16,6 @@ type ProfileResBody struct {
 
 type AnyUser interface{}
 
-// TODO: Simplify
 func NewProfileResBody(user AnyUser) (*ProfileResBody, error) {
 	switch user := user.(type) {
 	case db.CreateUserRow:

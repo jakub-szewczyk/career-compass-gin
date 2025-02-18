@@ -37,6 +37,11 @@ const docTemplate = `{
         },
         "/profile": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves and returns the profile information of the currently authenticated user",
                 "consumes": [
                     "application/json"
@@ -72,6 +77,11 @@ const docTemplate = `{
         },
         "/profile/verify-email": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Confirms the email address of the currently authenticated user. This endpoint requires an email verification token sent to the user's registered email.",
                 "consumes": [
                     "application/json"
@@ -255,10 +265,6 @@ const docTemplate = `{
                 "lastName": {
                     "type": "string",
                     "example": "Doe"
-                },
-                "verificationToken": {
-                    "type": "string",
-                    "example": "2cc313c8b72f8e5b725e07130d0b851811f2e60c8b19f085b3aa58d1516ef767"
                 }
             }
         },
@@ -349,6 +355,13 @@ const docTemplate = `{
                     "example": "2cc313c8b72f8e5b725e07130d0b851811f2e60c8b19f085b3aa58d1516ef767"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

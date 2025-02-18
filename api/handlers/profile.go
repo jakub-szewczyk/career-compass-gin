@@ -13,6 +13,9 @@ import (
 //
 //	@Summary		Get user profile
 //	@Description	Retrieves and returns the profile information of the currently authenticated user
+//
+//	@Security		BearerAuth
+//
 //	@Tags			Profile
 //	@Accept			json
 //	@Produce		json
@@ -54,6 +57,9 @@ func (h *Handler) Profile(c *gin.Context) {
 //
 //	@Summary		Verify user email
 //	@Description	Confirms the email address of the currently authenticated user. This endpoint requires an email verification token sent to the user's registered email.
+//
+//	@Security		BearerAuth
+//
 //	@Tags			Profile
 //	@Accept			json
 //	@Produce		json

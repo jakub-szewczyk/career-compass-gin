@@ -28,9 +28,6 @@ definitions:
       lastName:
         example: Doe
         type: string
-      verificationToken:
-        example: 2cc313c8b72f8e5b725e07130d0b851811f2e60c8b19f085b3aa58d1516ef767
-        type: string
     type: object
   models.SignInReqBody:
     properties:
@@ -133,6 +130,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
       summary: Get user profile
       tags:
       - Profile
@@ -165,6 +164,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
       summary: Verify user email
       tags:
       - Profile
@@ -235,4 +236,9 @@ paths:
       summary: User sign up
       tags:
       - Auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

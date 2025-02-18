@@ -12,8 +12,11 @@ import (
 	"github.com/swaggo/gin-swagger"
 )
 
-// @title		Career Compass REST API
-// @BasePath	/api
+// @title						Career Compass REST API
+// @BasePath					/api
+// @securityDefinitions.apikey	BearerAuth
+// @in							header
+// @name						Authorization
 func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engine {
 	// TODO: Read from env vars
 	docs.SwaggerInfo.Version = "1.0"
