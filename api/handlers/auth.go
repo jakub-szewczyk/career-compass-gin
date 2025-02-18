@@ -97,7 +97,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 		Year      int
 	}{
 		FirstName: user.FirstName,
-		Link:      h.env.EmailVerificationUrl,
+		Link:      h.env.EmailVerificationUrl + fmt.Sprintf("?token=%v", user.VerificationToken),
 		Year:      time.Now().Year(),
 	}); err != nil {
 		fmt.Println("error rendering template:", err)

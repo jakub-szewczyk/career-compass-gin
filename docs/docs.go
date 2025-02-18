@@ -70,6 +70,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/profile/verify-email": {
+            "patch": {
+                "description": "Confirms the email address of the currently authenticated user. This endpoint requires an email verification token sent to the user's registered email.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Verify user email",
+                "parameters": [
+                    {
+                        "description": "Email verification data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.VerifyEmailReqBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ProfileResBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/sign-in": {
             "post": {
                 "description": "Authenticates a user and returns a JWT token for session management. Valid credentials are required to access the system.",
@@ -289,6 +335,18 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/models.ProfileResBody"
+                }
+            }
+        },
+        "models.VerifyEmailReqBody": {
+            "type": "object",
+            "required": [
+                "verificationToken"
+            ],
+            "properties": {
+                "verificationToken": {
+                    "type": "string",
+                    "example": "2cc313c8b72f8e5b725e07130d0b851811f2e60c8b19f085b3aa58d1516ef767"
                 }
             }
         }

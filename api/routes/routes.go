@@ -37,6 +37,7 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 	api.Use(h.Auth())
 
 	api.GET("/profile", h.Profile)
+	api.PATCH("/profile/verify-email", h.VerifyEmail)
 
 	return r
 }

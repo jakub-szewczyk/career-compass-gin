@@ -87,6 +87,14 @@ definitions:
       user:
         $ref: '#/definitions/models.ProfileResBody'
     type: object
+  models.VerifyEmailReqBody:
+    properties:
+      verificationToken:
+        example: 2cc313c8b72f8e5b725e07130d0b851811f2e60c8b19f085b3aa58d1516ef767
+        type: string
+    required:
+    - verificationToken
+    type: object
 info:
   contact: {}
   title: Career Compass REST API
@@ -126,6 +134,38 @@ paths:
           schema:
             $ref: '#/definitions/models.Error'
       summary: Get user profile
+      tags:
+      - Profile
+  /profile/verify-email:
+    patch:
+      consumes:
+      - application/json
+      description: Confirms the email address of the currently authenticated user.
+        This endpoint requires an email verification token sent to the user's registered
+        email.
+      parameters:
+      - description: Email verification data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.VerifyEmailReqBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProfileResBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Verify user email
       tags:
       - Profile
   /sign-in:

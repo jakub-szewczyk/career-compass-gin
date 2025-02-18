@@ -29,7 +29,7 @@ EXECUTE FUNCTION set_updated_at_timestamp();
 -- Verification tokens
 CREATE TABLE verification_tokens (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id    UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   token      TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
   expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '24 hours',
   created_at TIMESTAMP DEFAULT NOW(),

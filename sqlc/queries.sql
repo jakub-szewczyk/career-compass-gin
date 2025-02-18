@@ -25,13 +25,13 @@ SELECT
 FROM new_user, new_token;
 
 -- name: GetUserOnSignIn :one
-SELECT u.id, u.first_name, u.last_name, u.email, u.password, u.is_email_verified, v.token AS verification_token
-FROM users AS u
-JOIN verification_tokens AS v ON u.id = v.user_id
-WHERE email = $1;
+SELECT id, first_name, last_name, email, password, is_email_verified FROM users WHERE email = $1;
 
 -- name: GetUserById :one
-SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token AS verification_token
-FROM users AS u
-JOIN verification_tokens AS v ON u.id = v.user_id
-WHERE u.id = $1;
+SELECT id, first_name, last_name, email, is_email_verified FROM users WHERE id = $1;
+
+-- name: GetVerificationToken :one
+SELECT token, expires_at FROM verification_tokens WHERE user_id = $1;
+
+-- name: VerifyEmail :one
+UPDATE users SET is_email_verified = true WHERE id = $1 RETURNING id, first_name, last_name, email, is_email_verified;

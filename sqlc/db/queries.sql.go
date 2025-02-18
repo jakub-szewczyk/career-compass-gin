@@ -71,19 +71,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token AS verification_token
-FROM users AS u
-JOIN verification_tokens AS v ON u.id = v.user_id
-WHERE u.id = $1
+SELECT id, first_name, last_name, email, is_email_verified FROM users WHERE id = $1
 `
 
 type GetUserByIdRow struct {
-	ID                pgtype.UUID `json:"id"`
-	FirstName         string      `json:"firstName"`
-	LastName          string      `json:"lastName"`
-	Email             string      `json:"email"`
-	IsEmailVerified   pgtype.Bool `json:"isEmailVerified"`
-	VerificationToken string      `json:"verificationToken"`
+	ID              pgtype.UUID `json:"id"`
+	FirstName       string      `json:"firstName"`
+	LastName        string      `json:"lastName"`
+	Email           string      `json:"email"`
+	IsEmailVerified pgtype.Bool `json:"isEmailVerified"`
 }
 
 func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdRow, error) {
@@ -95,26 +91,21 @@ func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (GetUserByIdR
 		&i.LastName,
 		&i.Email,
 		&i.IsEmailVerified,
-		&i.VerificationToken,
 	)
 	return i, err
 }
 
 const getUserOnSignIn = `-- name: GetUserOnSignIn :one
-SELECT u.id, u.first_name, u.last_name, u.email, u.password, u.is_email_verified, v.token AS verification_token
-FROM users AS u
-JOIN verification_tokens AS v ON u.id = v.user_id
-WHERE email = $1
+SELECT id, first_name, last_name, email, password, is_email_verified FROM users WHERE email = $1
 `
 
 type GetUserOnSignInRow struct {
-	ID                pgtype.UUID `json:"id"`
-	FirstName         string      `json:"firstName"`
-	LastName          string      `json:"lastName"`
-	Email             string      `json:"email"`
-	Password          string      `json:"password"`
-	IsEmailVerified   pgtype.Bool `json:"isEmailVerified"`
-	VerificationToken string      `json:"verificationToken"`
+	ID              pgtype.UUID `json:"id"`
+	FirstName       string      `json:"firstName"`
+	LastName        string      `json:"lastName"`
+	Email           string      `json:"email"`
+	Password        string      `json:"password"`
+	IsEmailVerified pgtype.Bool `json:"isEmailVerified"`
 }
 
 func (q *Queries) GetUserOnSignIn(ctx context.Context, email string) (GetUserOnSignInRow, error) {
@@ -127,8 +118,23 @@ func (q *Queries) GetUserOnSignIn(ctx context.Context, email string) (GetUserOnS
 		&i.Email,
 		&i.Password,
 		&i.IsEmailVerified,
-		&i.VerificationToken,
 	)
+	return i, err
+}
+
+const getVerificationToken = `-- name: GetVerificationToken :one
+SELECT token, expires_at FROM verification_tokens WHERE user_id = $1
+`
+
+type GetVerificationTokenRow struct {
+	Token     string           `json:"token"`
+	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
+}
+
+func (q *Queries) GetVerificationToken(ctx context.Context, userID pgtype.UUID) (GetVerificationTokenRow, error) {
+	row := q.db.QueryRow(ctx, getVerificationToken, userID)
+	var i GetVerificationTokenRow
+	err := row.Scan(&i.Token, &i.ExpiresAt)
 	return i, err
 }
 
@@ -139,4 +145,29 @@ TRUNCATE TABLE users, verification_tokens
 func (q *Queries) Purge(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, purge)
 	return err
+}
+
+const verifyEmail = `-- name: VerifyEmail :one
+UPDATE users SET is_email_verified = true WHERE id = $1 RETURNING id, first_name, last_name, email, is_email_verified
+`
+
+type VerifyEmailRow struct {
+	ID              pgtype.UUID `json:"id"`
+	FirstName       string      `json:"firstName"`
+	LastName        string      `json:"lastName"`
+	Email           string      `json:"email"`
+	IsEmailVerified pgtype.Bool `json:"isEmailVerified"`
+}
+
+func (q *Queries) VerifyEmail(ctx context.Context, id pgtype.UUID) (VerifyEmailRow, error) {
+	row := q.db.QueryRow(ctx, verifyEmail, id)
+	var i VerifyEmailRow
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.IsEmailVerified,
+	)
+	return i, err
 }
