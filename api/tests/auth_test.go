@@ -29,7 +29,6 @@ func TestSignUp(t *testing.T) {
 
 	token = resBodyRaw.Token
 
-	// NOTE: Test response body
 	assert.NoError(t, err, "error unmarshaling response body")
 
 	assert.Equal(t, http.StatusCreated, w.Code)
@@ -41,7 +40,6 @@ func TestSignUp(t *testing.T) {
 	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified)
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 
-	// NOTE: Test database entry
 	uuid, _ := common.ToUUID(resBodyRaw.User.ID)
 	user, err := queries.GetUserById(ctx, uuid)
 
@@ -71,7 +69,6 @@ func TestSignIn(t *testing.T) {
 	var resBodyRaw models.SignInResBody
 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
-	// NOTE: Test response body
 	assert.NoError(t, err, "error unmarshaling response body")
 
 	assert.Equal(t, http.StatusOK, w.Code)

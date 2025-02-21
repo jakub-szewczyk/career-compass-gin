@@ -30,6 +30,13 @@ SELECT id, first_name, last_name, email, password, is_email_verified FROM users 
 -- name: GetUserById :one
 SELECT id, first_name, last_name, email, is_email_verified FROM users WHERE id = $1;
 
+-- name: GetUserByEmail :one
+SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token as verification_token
+FROM users AS u
+JOIN verification_tokens as v
+ON u.id = v.user_id
+WHERE u.email = $1;
+
 -- name: GetVerificationToken :one
 SELECT token, expires_at FROM verification_tokens WHERE user_id = $1;
 

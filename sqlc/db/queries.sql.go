@@ -70,6 +70,37 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token as verification_token
+FROM users AS u
+JOIN verification_tokens as v
+ON u.id = v.user_id
+WHERE u.email = $1
+`
+
+type GetUserByEmailRow struct {
+	ID                pgtype.UUID `json:"id"`
+	FirstName         string      `json:"firstName"`
+	LastName          string      `json:"lastName"`
+	Email             string      `json:"email"`
+	IsEmailVerified   pgtype.Bool `json:"isEmailVerified"`
+	VerificationToken string      `json:"verificationToken"`
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i GetUserByEmailRow
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.IsEmailVerified,
+		&i.VerificationToken,
+	)
+	return i, err
+}
+
 const getUserById = `-- name: GetUserById :one
 SELECT id, first_name, last_name, email, is_email_verified FROM users WHERE id = $1
 `

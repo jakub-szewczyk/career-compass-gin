@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
-	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
+	"github.com/jakub-szewczyk/career-compass-gin/api/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,78 +16,175 @@ func TestProfile(t *testing.T) {
 
 	TestSignUp(t)
 
-	w := httptest.NewRecorder()
+	t.Run("valid request", func(t *testing.T) {
+		w := httptest.NewRecorder()
 
-	req, _ := http.NewRequest("GET", "/api/profile", nil)
-	req.Header.Add("Authorization", "Bearer "+token)
+		req, _ := http.NewRequest("GET", "/api/profile", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
 
-	r.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
-	var resBodyRaw1 db.GetUserByIdRow
-	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw1)
+		var resBodyRaw models.ProfileResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
-	// NOTE: Test response body
-	assert.NoError(t, err, "error unmarshaling response body")
+		assert.NoError(t, err, "error unmarshaling response body")
 
-	assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusOK, w.Code)
 
-	assert.NotEmpty(t, resBodyRaw1.ID, "missing user id")
-	assert.Equal(t, "Jakub", resBodyRaw1.FirstName)
-	assert.Equal(t, "Szewczyk", resBodyRaw1.LastName)
-	assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw1.Email)
-	assert.Equal(t, false, resBodyRaw1.IsEmailVerified.Bool)
+		assert.NotEmpty(t, resBodyRaw.ID, "missing user id")
+		assert.Equal(t, "Jakub", resBodyRaw.FirstName)
+		assert.Equal(t, "Szewczyk", resBodyRaw.LastName)
+		assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw.Email)
+		assert.Equal(t, false, resBodyRaw.IsEmailVerified)
+	})
 
-	// NOTE: Test missing Authorization token
-	w = httptest.NewRecorder()
+	t.Run("missing authorization token", func(t *testing.T) {
+		w := httptest.NewRecorder()
 
-	req.Header.Del("Authorization")
+		req, _ := http.NewRequest("GET", "/api/profile", nil)
 
-	r.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
-	var resBodyRaw2 struct {
-		Error string `json:"error"`
-	}
-	err = json.Unmarshal(w.Body.Bytes(), &resBodyRaw2)
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
-	assert.NoError(t, err, "error unmarshaling response body")
+		assert.NoError(t, err, "error unmarshaling response body")
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 
-	assert.Equal(t, "missing Authorization header", resBodyRaw2.Error)
+		assert.Equal(t, "missing Authorization header", resBodyRaw.Error)
+	})
 
-	// NOTE: Test invalid Authorization token
-	w = httptest.NewRecorder()
+	t.Run("invalid authorization token", func(t *testing.T) {
+		w := httptest.NewRecorder()
 
-	req.Header.Set("Authorization", "testing")
+		req, _ := http.NewRequest("GET", "/api/profile", nil)
+		req.Header.Add("Authorization", "testing")
 
-	r.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
-	var resBodyRaw3 struct {
-		Error string `json:"error"`
-	}
-	err = json.Unmarshal(w.Body.Bytes(), &resBodyRaw3)
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
-	assert.NoError(t, err, "error unmarshaling response body")
+		assert.NoError(t, err, "error unmarshaling response body")
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 
-	assert.Equal(t, "invalid Authorization header format", resBodyRaw3.Error)
+		assert.Equal(t, "invalid Authorization header format", resBodyRaw.Error)
+	})
 
-	// NOTE: Test expired Authorization token
-	w = httptest.NewRecorder()
+	t.Run("expired authorization token", func(t *testing.T) {
+		w := httptest.NewRecorder()
 
-	req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mzg5MTQ4NTcsInN1YiI6ImphY2suZGFuaWVsc0BnbWFpbC5jb20iLCJ1aWQiOiI1YWFhMTAzMS01MDZjLTRmYzItYTMzNC1lYTVhOTQzNmYzYmQifQ.xcKER7PtNpujouNS_VlWePIDDHQvAkdO40XckPGcmcs")
+		req, _ := http.NewRequest("GET", "/api/profile", nil)
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Mzg5MTQ4NTcsInN1YiI6ImphY2suZGFuaWVsc0BnbWFpbC5jb20iLCJ1aWQiOiI1YWFhMTAzMS01MDZjLTRmYzItYTMzNC1lYTVhOTQzNmYzYmQifQ.xcKER7PtNpujouNS_VlWePIDDHQvAkdO40XckPGcmcs")
 
-	r.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
-	var resBodyRaw4 struct {
-		Error string `json:"error"`
-	}
-	err = json.Unmarshal(w.Body.Bytes(), &resBodyRaw4)
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
-	assert.NoError(t, err, "error unmarshaling response body")
+		assert.NoError(t, err, "error unmarshaling response body")
 
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 
-	assert.Equal(t, "token has invalid claims: token is expired", resBodyRaw4.Error)
+		assert.Equal(t, "token has invalid claims: token is expired", resBodyRaw.Error)
+	})
+}
+
+func TestVerifyEmail(t *testing.T) {
+	queries.Purge(ctx)
+
+	TestSignUp(t)
+
+	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+	t.Run("valid request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.NewVerifyEmailReqBody(user.VerificationToken)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PATCH", "/api/profile/verify-email", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ProfileResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing user id")
+		assert.Equal(t, "Jakub", resBodyRaw.FirstName)
+		assert.Equal(t, "Szewczyk", resBodyRaw.LastName)
+		assert.Equal(t, "jakub.szewczyk@test.com", resBodyRaw.Email)
+		assert.Equal(t, true, resBodyRaw.IsEmailVerified)
+	})
+
+	t.Run("missing verification token", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.NewVerifyEmailReqBody("")
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PATCH", "/api/profile/verify-email", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.Equal(t, "Key: 'VerifyEmailReqBody.VerificationToken' Error:Field validation for 'VerificationToken' failed on the 'required' tag", resBodyRaw.Error)
+	})
+
+	t.Run("invalid verification token", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.NewVerifyEmailReqBody(user.Email)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PATCH", "/api/profile/verify-email", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.Equal(t, "invalid verification token", resBodyRaw.Error)
+	})
+
+	// TODO: Mock time
+	// t.Run("expired verification token", func(t *testing.T) {
+	// 	w := httptest.NewRecorder()
+	//
+	// 	bodyRaw := models.NewVerifyEmailReqBody(user.VerificationToken)
+	// 	bodyJSON, _ := json.Marshal(bodyRaw)
+	//
+	// 	req, _ := http.NewRequest("PATCH", "/api/profile/verify-email", strings.NewReader(string(bodyJSON)))
+	// 	req.Header.Add("Authorization", "Bearer "+token)
+	//
+	// 	r.ServeHTTP(w, req)
+	//
+	// 	var resBodyRaw models.Error
+	// 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+	//
+	// 	assert.NoError(t, err, "error unmarshaling response body")
+	//
+	// 	assert.Equal(t, http.StatusBadRequest, w.Code)
+	//
+	// 	assert.Equal(t, "expired verification token", resBodyRaw.Error)
+	// })
 }
