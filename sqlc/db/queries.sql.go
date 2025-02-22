@@ -178,6 +178,26 @@ func (q *Queries) Purge(ctx context.Context) error {
 	return err
 }
 
+const updateVerificationToken = `-- name: UpdateVerificationToken :one
+UPDATE verification_tokens SET
+  token = encode(gen_random_bytes(32), 'hex'),
+  expires_at = GREATEST(NOW(), expires_at) + INTERVAL '1 day'
+WHERE user_id = $1
+RETURNING token, expires_at
+`
+
+type UpdateVerificationTokenRow struct {
+	Token     string           `json:"token"`
+	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
+}
+
+func (q *Queries) UpdateVerificationToken(ctx context.Context, userID pgtype.UUID) (UpdateVerificationTokenRow, error) {
+	row := q.db.QueryRow(ctx, updateVerificationToken, userID)
+	var i UpdateVerificationTokenRow
+	err := row.Scan(&i.Token, &i.ExpiresAt)
+	return i, err
+}
+
 const verifyEmail = `-- name: VerifyEmail :one
 UPDATE users SET is_email_verified = true WHERE id = $1 RETURNING id, first_name, last_name, email, is_email_verified
 `

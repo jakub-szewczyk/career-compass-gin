@@ -136,6 +136,33 @@ paths:
       tags:
       - Profile
   /profile/verify-email:
+    get:
+      consumes:
+      - application/json
+      description: Sends a verification email to the user. This endpoint can be used
+        to resend the email if needed.
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Send user verification email
+      tags:
+      - Profile
     patch:
       consumes:
       - application/json

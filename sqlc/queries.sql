@@ -33,8 +33,7 @@ SELECT id, first_name, last_name, email, is_email_verified FROM users WHERE id =
 -- name: GetUserByEmail :one
 SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token as verification_token
 FROM users AS u
-JOIN verification_tokens as v
-ON u.id = v.user_id
+JOIN verification_tokens as v ON u.id = v.user_id
 WHERE u.email = $1;
 
 -- name: GetVerificationToken :one
@@ -42,3 +41,10 @@ SELECT token, expires_at FROM verification_tokens WHERE user_id = $1;
 
 -- name: VerifyEmail :one
 UPDATE users SET is_email_verified = true WHERE id = $1 RETURNING id, first_name, last_name, email, is_email_verified;
+
+-- name: UpdateVerificationToken :one
+UPDATE verification_tokens SET
+  token = encode(gen_random_bytes(32), 'hex'),
+  expires_at = NOW() + INTERVAL '1 day'
+WHERE user_id = $1
+RETURNING token, expires_at;
