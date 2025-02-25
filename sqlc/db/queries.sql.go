@@ -70,11 +70,19 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const expireVerificationToken = `-- name: ExpireVerificationToken :exec
+UPDATE verification_tokens SET expires_at = NOW() - INTERVAL '1 day' WHERE user_id = $1
+`
+
+func (q *Queries) ExpireVerificationToken(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, expireVerificationToken, userID)
+	return err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token as verification_token
 FROM users AS u
-JOIN verification_tokens as v
-ON u.id = v.user_id
+JOIN verification_tokens as v ON u.id = v.user_id
 WHERE u.email = $1
 `
 
@@ -181,7 +189,7 @@ func (q *Queries) Purge(ctx context.Context) error {
 const updateVerificationToken = `-- name: UpdateVerificationToken :one
 UPDATE verification_tokens SET
   token = encode(gen_random_bytes(32), 'hex'),
-  expires_at = GREATEST(NOW(), expires_at) + INTERVAL '1 day'
+  expires_at = NOW() + INTERVAL '1 day'
 WHERE user_id = $1
 RETURNING token, expires_at
 `

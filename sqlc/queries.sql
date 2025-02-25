@@ -48,3 +48,6 @@ UPDATE verification_tokens SET
   expires_at = NOW() + INTERVAL '1 day'
 WHERE user_id = $1
 RETURNING token, expires_at;
+
+-- name: ExpireVerificationToken :exec
+UPDATE verification_tokens SET expires_at = NOW() - INTERVAL '1 day' WHERE user_id = $1;

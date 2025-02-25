@@ -188,3 +188,48 @@ func TestVerifyEmail(t *testing.T) {
 	// 	assert.Equal(t, "expired verification token", resBodyRaw.Error)
 	// })
 }
+
+func TestSendVerificationEmail(t *testing.T) {
+	queries.Purge(ctx)
+
+	TestSignUp(t)
+
+	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+	t.Run("valid request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		tkn, _ := queries.GetVerificationToken(ctx, user.ID)
+
+		req, _ := http.NewRequest("GET", "/api/profile/verify-email", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		newTkn, _ := queries.GetVerificationToken(ctx, user.ID)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, tkn.Token, newTkn.Token)
+		assert.Equal(t, tkn.ExpiresAt, newTkn.ExpiresAt)
+	})
+
+	t.Run("expired verification token", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		queries.ExpireVerificationToken(ctx, user.ID)
+		expiredToken, _ := queries.GetVerificationToken(ctx, user.ID)
+
+		req, _ := http.NewRequest("GET", "/api/profile/verify-email", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		renewedToken, _ := queries.GetVerificationToken(ctx, user.ID)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEqual(t, expiredToken.Token, renewedToken.Token)
+		assert.NotEqual(t, expiredToken.ExpiresAt.Time.String(), renewedToken.ExpiresAt.Time.String())
+	})
+}
