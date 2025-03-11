@@ -23,6 +23,10 @@ var ctx context.Context
 var token string
 var queries *db.Queries
 
+func setupUser(ctx context.Context) {
+	queries.CreateUser(ctx, db.CreateUserParams{FirstName: "Jakub", LastName: "Szewczyk", Email: "jakub.szewczyk@test.com", Password: "qwerty!123456789"})
+}
+
 func TestMain(m *testing.M) {
 	ctx = context.Background()
 

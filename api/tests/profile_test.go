@@ -14,7 +14,7 @@ import (
 func TestProfile(t *testing.T) {
 	queries.Purge(ctx)
 
-	TestSignUp(t)
+	setupUser(ctx)
 
 	t.Run("valid request", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -95,7 +95,7 @@ func TestProfile(t *testing.T) {
 func TestVerifyEmail(t *testing.T) {
 	queries.Purge(ctx)
 
-	TestSignUp(t)
+	setupUser(ctx)
 
 	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
 
@@ -192,7 +192,7 @@ func TestVerifyEmail(t *testing.T) {
 func TestSendVerificationEmail(t *testing.T) {
 	queries.Purge(ctx)
 
-	TestSignUp(t)
+	setupUser(ctx)
 
 	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
 
