@@ -11,6 +11,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createPasswordResetToken = `-- name: CreatePasswordResetToken :one
+INSERT INTO password_reset_tokens (user_id)
+VALUES ($1)
+ON CONFLICT (user_id)
+DO UPDATE SET token = encode(gen_random_bytes(32), 'hex'), expires_at = NOW() + INTERVAL '15 minutes'
+RETURNING token
+`
+
+func (q *Queries) CreatePasswordResetToken(ctx context.Context, userID pgtype.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, createPasswordResetToken, userID)
+	var token string
+	err := row.Scan(&token)
+	return token, err
+}
+
 const createUser = `-- name: CreateUser :one
 WITH new_user AS (
   INSERT INTO users (first_name, last_name, email, password)

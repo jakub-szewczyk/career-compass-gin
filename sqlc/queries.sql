@@ -51,3 +51,10 @@ RETURNING token, expires_at;
 
 -- name: ExpireVerificationToken :exec
 UPDATE verification_tokens SET expires_at = NOW() - INTERVAL '1 day' WHERE user_id = $1;
+
+-- name: CreatePasswordResetToken :one
+INSERT INTO password_reset_tokens (user_id)
+VALUES ($1)
+ON CONFLICT (user_id)
+DO UPDATE SET token = encode(gen_random_bytes(32), 'hex'), expires_at = NOW() + INTERVAL '15 minutes'
+RETURNING token;

@@ -111,6 +111,7 @@ func (h *Handler) SendVerificationEmail(c *gin.Context) {
 		})
 	}
 
+	// TODO: Consider using goroutines
 	tmpl, err := template.ParseFiles(filepath.Join("templates", "sign-up.html"))
 	if err != nil {
 		fmt.Println("error loading template:", err)
@@ -124,7 +125,7 @@ func (h *Handler) SendVerificationEmail(c *gin.Context) {
 		Year      int
 	}{
 		FirstName: user.FirstName,
-		Link:      h.env.EmailVerificationUrl + fmt.Sprintf("?token=%v", token.Token),
+		Link:      h.env.EmailVerificationURL + fmt.Sprintf("?token=%v", token.Token),
 		Year:      time.Now().Year(),
 	}); err != nil {
 		fmt.Println("error rendering template:", err)

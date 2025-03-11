@@ -18,10 +18,11 @@ type Env struct {
 	SMTPPORT     string
 
 	FrontendURL          string
-	EmailVerificationUrl string
+	EmailVerificationURL string
+	ResetPasswordURL     string
 }
 
-func NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL, emailVerificationUrl string) Env {
+func NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL, emailVerificationURL, resetPasswordURL string) Env {
 	return Env{
 		Port:        port,
 		DatabaseURL: databaseURL,
@@ -34,7 +35,8 @@ func NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPasswo
 		SMTPPORT:     smtpPort,
 
 		FrontendURL:          frontendURL,
-		EmailVerificationUrl: emailVerificationUrl,
+		EmailVerificationURL: emailVerificationURL,
+		ResetPasswordURL:     resetPasswordURL,
 	}
 }
 

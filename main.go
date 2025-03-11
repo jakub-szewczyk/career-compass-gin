@@ -60,9 +60,14 @@ func main() {
 		log.Fatal("missing env var: FRONTEND_URL")
 	}
 
-	emailVerificationUrl := os.Getenv("EMAIL_VERIFICATION_URL")
-	if emailVerificationUrl == "" {
+	emailVerificationURL := os.Getenv("EMAIL_VERIFICATION_URL")
+	if emailVerificationURL == "" {
 		log.Fatal("missing env var: EMAIL_VERIFICATION_URL")
+	}
+
+	resetPasswordURL := os.Getenv("RESET_PASSWORD_URL")
+	if resetPasswordURL == "" {
+		log.Fatal("missing env var: RESET_PASSWORD_URL")
 	}
 
 	ctx := context.Background()
@@ -75,7 +80,7 @@ func main() {
 
 	queries := db.New(conn)
 
-	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL, emailVerificationUrl), queries)
+	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL, emailVerificationURL, resetPasswordURL), queries)
 
 	err = r.Run(":" + port)
 	if err != nil {

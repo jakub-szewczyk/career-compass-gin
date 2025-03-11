@@ -11,6 +11,14 @@ definitions:
         example: healthy
         type: string
     type: object
+  models.InitPasswordResetReqBody:
+    properties:
+      email:
+        example: john.doe@example.com
+        type: string
+    required:
+    - email
+    type: object
   models.ProfileResBody:
     properties:
       email:
@@ -109,6 +117,39 @@ paths:
       summary: Health check
       tags:
       - Health check
+  /password/reset:
+    post:
+      consumes:
+      - application/json
+      description: Generates and sends a password reset token to the user's email
+        address
+      parameters:
+      - description: User's email address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.InitPasswordResetReqBody'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Initiate password reset
+      tags:
+      - Password
   /profile:
     get:
       consumes:
