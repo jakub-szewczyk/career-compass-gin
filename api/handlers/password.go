@@ -11,6 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
+	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // InitPasswordReset godoc
@@ -39,7 +41,7 @@ func (h *Handler) InitPasswordReset(c *gin.Context) {
 	user, err := h.queries.GetUserByEmail(h.ctx, body.Email)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-			"error": err.Error(),
+			"error": "user with provided email doesn't exist",
 		})
 		return
 	}
@@ -84,4 +86,69 @@ func (h *Handler) InitPasswordReset(c *gin.Context) {
 		fmt.Println("error sending email:", err)
 		return
 	}
+}
+
+// ResetPassword godoc
+//
+//	@Summary		Reset password
+//	@Description	Allows a user to set a new password using a valid reset token. This endpoint is typically used in the "forgot password" flow.
+//	@Tags			Password
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.ResetPasswordReqBody	true	"New user credentials"
+//	@Failure		400		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Success		204
+//	@Router			/password/reset [put]
+func (h *Handler) ResetPassword(c *gin.Context) {
+	var body models.ResetPasswordReqBody
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	token, err := h.queries.GetPasswordResetToken(h.ctx, body.PasswordResetToken)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"error": "missing password reset token",
+		})
+		return
+	}
+
+	if token.ExpiresAt.Time.Before(time.Now()) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "expired password reset token",
+		})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := h.queries.UpdatePassword(h.ctx, db.UpdatePasswordParams{
+		ID:       token.UserID,
+		Password: string(hash),
+	}); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := h.queries.DeletePasswordResetToken(h.ctx, token.Token); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }

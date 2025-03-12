@@ -37,6 +37,22 @@ definitions:
         example: Doe
         type: string
     type: object
+  models.ResetPasswordReqBody:
+    properties:
+      confirmPassword:
+        example: qwerty!123456789
+        type: string
+      password:
+        example: qwerty!123456789
+        type: string
+      passwordResetToken:
+        example: ec6c66fbd3d92b1ad44f21613c5ee2e82c3dd65e8c918945308087ce77b5fe47
+        type: string
+    required:
+    - confirmPassword
+    - password
+    - passwordResetToken
+    type: object
   models.SignInReqBody:
     properties:
       email:
@@ -148,6 +164,34 @@ paths:
           schema:
             $ref: '#/definitions/models.Error'
       summary: Initiate password reset
+      tags:
+      - Password
+    put:
+      consumes:
+      - application/json
+      description: Allows a user to set a new password using a valid reset token.
+        This endpoint is typically used in the "forgot password" flow.
+      parameters:
+      - description: New user credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ResetPasswordReqBody'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Reset password
       tags:
       - Password
   /profile:

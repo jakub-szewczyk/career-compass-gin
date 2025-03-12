@@ -58,3 +58,12 @@ VALUES ($1)
 ON CONFLICT (user_id)
 DO UPDATE SET token = encode(gen_random_bytes(32), 'hex'), expires_at = NOW() + INTERVAL '15 minutes'
 RETURNING token;
+
+-- name: GetPasswordResetToken :one
+SELECT token, expires_at, user_id FROM password_reset_tokens WHERE token = $1;
+
+-- name: UpdatePassword :exec
+UPDATE users SET password = $2 WHERE id = $1;
+
+-- name: DeletePasswordResetToken :exec
+DELETE FROM password_reset_tokens WHERE token = $1;

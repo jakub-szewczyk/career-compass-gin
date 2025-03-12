@@ -27,6 +27,47 @@
             }
         },
         "/password/reset": {
+            "put": {
+                "description": "Allows a user to set a new password using a valid reset token. This endpoint is typically used in the \"forgot password\" flow.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Password"
+                ],
+                "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "New user credentials",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ResetPasswordReqBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Generates and sends a password reset token to the user's email address",
                 "consumes": [
@@ -358,6 +399,28 @@
                 "lastName": {
                     "type": "string",
                     "example": "Doe"
+                }
+            }
+        },
+        "models.ResetPasswordReqBody": {
+            "type": "object",
+            "required": [
+                "confirmPassword",
+                "password",
+                "passwordResetToken"
+            ],
+            "properties": {
+                "confirmPassword": {
+                    "type": "string",
+                    "example": "qwerty!123456789"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "qwerty!123456789"
+                },
+                "passwordResetToken": {
+                    "type": "string",
+                    "example": "ec6c66fbd3d92b1ad44f21613c5ee2e82c3dd65e8c918945308087ce77b5fe47"
                 }
             }
         },

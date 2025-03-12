@@ -37,7 +37,7 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 	api.POST("/sign-in", h.SignIn)
 
 	api.POST("/password/reset", h.InitPasswordReset)
-	// api.PUT("/password/reset", h.ResetPassword)
+	api.PUT("/password/reset", h.ResetPassword)
 
 	// NOTE: Private routes
 	api.Use(h.Auth())

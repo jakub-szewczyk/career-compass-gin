@@ -85,6 +85,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const deletePasswordResetToken = `-- name: DeletePasswordResetToken :exec
+DELETE FROM password_reset_tokens WHERE token = $1
+`
+
+func (q *Queries) DeletePasswordResetToken(ctx context.Context, token string) error {
+	_, err := q.db.Exec(ctx, deletePasswordResetToken, token)
+	return err
+}
+
 const expireVerificationToken = `-- name: ExpireVerificationToken :exec
 UPDATE verification_tokens SET expires_at = NOW() - INTERVAL '1 day' WHERE user_id = $1
 `
@@ -92,6 +101,23 @@ UPDATE verification_tokens SET expires_at = NOW() - INTERVAL '1 day' WHERE user_
 func (q *Queries) ExpireVerificationToken(ctx context.Context, userID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, expireVerificationToken, userID)
 	return err
+}
+
+const getPasswordResetToken = `-- name: GetPasswordResetToken :one
+SELECT token, expires_at, user_id FROM password_reset_tokens WHERE token = $1
+`
+
+type GetPasswordResetTokenRow struct {
+	Token     string           `json:"token"`
+	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
+	UserID    pgtype.UUID      `json:"userId"`
+}
+
+func (q *Queries) GetPasswordResetToken(ctx context.Context, token string) (GetPasswordResetTokenRow, error) {
+	row := q.db.QueryRow(ctx, getPasswordResetToken, token)
+	var i GetPasswordResetTokenRow
+	err := row.Scan(&i.Token, &i.ExpiresAt, &i.UserID)
+	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -193,11 +219,25 @@ func (q *Queries) GetVerificationToken(ctx context.Context, userID pgtype.UUID) 
 }
 
 const purge = `-- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens
 `
 
 func (q *Queries) Purge(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, purge)
+	return err
+}
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE users SET password = $2 WHERE id = $1
+`
+
+type UpdatePasswordParams struct {
+	ID       pgtype.UUID `json:"id"`
+	Password string      `json:"password"`
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.Exec(ctx, updatePassword, arg.ID, arg.Password)
 	return err
 }
 
