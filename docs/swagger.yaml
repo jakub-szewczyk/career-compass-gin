@@ -43,7 +43,9 @@ definitions:
         example: qwerty!123456789
         type: string
       password:
+        description: 'TODO: Improve password strength'
         example: qwerty!123456789
+        minLength: 16
         type: string
       passwordResetToken:
         example: ec6c66fbd3d92b1ad44f21613c5ee2e82c3dd65e8c918945308087ce77b5fe47

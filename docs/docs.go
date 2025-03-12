@@ -424,7 +424,9 @@ const docTemplate = `{
                     "example": "qwerty!123456789"
                 },
                 "password": {
+                    "description": "TODO: Improve password strength",
                     "type": "string",
+                    "minLength": 16,
                     "example": "qwerty!123456789"
                 },
                 "passwordResetToken": {
