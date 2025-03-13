@@ -14,7 +14,7 @@ import (
 func TestProfile(t *testing.T) {
 	queries.Purge(ctx)
 
-	setupUser(ctx)
+	setUpUser(ctx)
 
 	t.Run("valid request", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -95,7 +95,7 @@ func TestProfile(t *testing.T) {
 func TestVerifyEmail(t *testing.T) {
 	queries.Purge(ctx)
 
-	setupUser(ctx)
+	setUpUser(ctx)
 
 	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
 
@@ -165,34 +165,12 @@ func TestVerifyEmail(t *testing.T) {
 
 		assert.Equal(t, "invalid verification token", resBodyRaw.Error)
 	})
-
-	// TODO: Mock time
-	// t.Run("expired verification token", func(t *testing.T) {
-	// 	w := httptest.NewRecorder()
-	//
-	// 	bodyRaw := models.NewVerifyEmailReqBody(user.VerificationToken)
-	// 	bodyJSON, _ := json.Marshal(bodyRaw)
-	//
-	// 	req, _ := http.NewRequest("PATCH", "/api/profile/verify-email", strings.NewReader(string(bodyJSON)))
-	// 	req.Header.Add("Authorization", "Bearer "+token)
-	//
-	// 	r.ServeHTTP(w, req)
-	//
-	// 	var resBodyRaw models.Error
-	// 	err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
-	//
-	// 	assert.NoError(t, err, "error unmarshaling response body")
-	//
-	// 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	//
-	// 	assert.Equal(t, "expired verification token", resBodyRaw.Error)
-	// })
 }
 
 func TestSendVerificationEmail(t *testing.T) {
 	queries.Purge(ctx)
 
-	setupUser(ctx)
+	setUpUser(ctx)
 
 	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
 

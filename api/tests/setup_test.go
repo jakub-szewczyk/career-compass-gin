@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jakub-szewczyk/career-compass-gin/api/handlers"
 	"github.com/jakub-szewczyk/career-compass-gin/api/routes"
@@ -16,6 +17,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var r *gin.Engine
@@ -23,8 +25,31 @@ var ctx context.Context
 var token string
 var queries *db.Queries
 
-func setupUser(ctx context.Context) {
-	queries.CreateUser(ctx, db.CreateUserParams{FirstName: "Jakub", LastName: "Szewczyk", Email: "jakub.szewczyk@test.com", Password: "qwerty!123456789"})
+func setUpUser(ctx context.Context) (*db.CreateUserRow, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte("qwerty!123456789"), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := queries.CreateUser(ctx, db.CreateUserParams{FirstName: "Jakub", LastName: "Szewczyk", Email: "jakub.szewczyk@test.com", Password: string(hash)})
+	if err != nil {
+		return nil, err
+	}
+
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uid": user.ID,
+		"sub": user.Email,
+		"exp": jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+	})
+
+	signed, err := t.SignedString([]byte("testing"))
+	if err != nil {
+		return nil, err
+	}
+
+	token = signed
+
+	return &user, nil
 }
 
 func TestMain(m *testing.M) {

@@ -55,7 +55,7 @@ func TestSignUp(t *testing.T) {
 func TestSignIn(t *testing.T) {
 	queries.Purge(ctx)
 
-	setupUser(ctx)
+	setUpUser(ctx)
 
 	w := httptest.NewRecorder()
 
