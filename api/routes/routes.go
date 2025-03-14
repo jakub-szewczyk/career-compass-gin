@@ -47,5 +47,11 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 	api.GET("/profile/verify-email", h.SendVerificationEmail)
 	api.PATCH("/profile/verify-email", h.VerifyEmail)
 
+	api.GET("/job-applications", h.JobApplications)
+	api.GET("/job-applications/:jobApplicationId", h.JobApplication)
+	api.POST("/job-applications", h.CreateJobApplication)
+	api.PUT("/job-applications/:jobApplicationId", h.UpdateJobApplication)
+	api.DELETE("/job-applications/:jobApplicationId", h.DeleteJobApplication)
+
 	return r
 }

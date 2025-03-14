@@ -11,6 +11,63 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createJobApplication = `-- name: CreateJobApplication :one
+INSERT INTO job_applications (user_id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes
+`
+
+type CreateJobApplicationParams struct {
+	UserID        pgtype.UUID      `json:"userId"`
+	CompanyName   string           `json:"companyName"`
+	JobTitle      string           `json:"jobTitle"`
+	DateApplied   pgtype.Timestamp `json:"dateApplied"`
+	Status        Status           `json:"status"`
+	MinSalary     pgtype.Float8    `json:"minSalary"`
+	MaxSalary     pgtype.Float8    `json:"maxSalary"`
+	JobPostingUrl pgtype.Text      `json:"jobPostingUrl"`
+	Notes         pgtype.Text      `json:"notes"`
+}
+
+type CreateJobApplicationRow struct {
+	ID            pgtype.UUID      `json:"id"`
+	CompanyName   string           `json:"companyName"`
+	JobTitle      string           `json:"jobTitle"`
+	DateApplied   pgtype.Timestamp `json:"dateApplied"`
+	Status        Status           `json:"status"`
+	MinSalary     pgtype.Float8    `json:"minSalary"`
+	MaxSalary     pgtype.Float8    `json:"maxSalary"`
+	JobPostingUrl pgtype.Text      `json:"jobPostingUrl"`
+	Notes         pgtype.Text      `json:"notes"`
+}
+
+func (q *Queries) CreateJobApplication(ctx context.Context, arg CreateJobApplicationParams) (CreateJobApplicationRow, error) {
+	row := q.db.QueryRow(ctx, createJobApplication,
+		arg.UserID,
+		arg.CompanyName,
+		arg.JobTitle,
+		arg.DateApplied,
+		arg.Status,
+		arg.MinSalary,
+		arg.MaxSalary,
+		arg.JobPostingUrl,
+		arg.Notes,
+	)
+	var i CreateJobApplicationRow
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyName,
+		&i.JobTitle,
+		&i.DateApplied,
+		&i.Status,
+		&i.MinSalary,
+		&i.MaxSalary,
+		&i.JobPostingUrl,
+		&i.Notes,
+	)
+	return i, err
+}
+
 const createPasswordResetToken = `-- name: CreatePasswordResetToken :one
 INSERT INTO password_reset_tokens (user_id)
 VALUES ($1)
