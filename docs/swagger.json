@@ -72,6 +72,56 @@
                 }
             }
         },
+        "/job-applications/{jobApplicationId}": {
+            "get": {
+                "description": "Fetches the details of a specific job application by its id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job application"
+                ],
+                "summary": "Retrieve job application details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job application uuid",
+                        "name": "jobApplicationId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.JobApplicationResBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/password/reset": {
             "put": {
                 "description": "Allows a user to set a new password using a valid reset token. This endpoint is typically used in the \"forgot password\" flow.",
@@ -525,6 +575,57 @@
                 "email": {
                     "type": "string",
                     "example": "john.doe@example.com"
+                }
+            }
+        },
+        "models.JobApplicationResBody": {
+            "type": "object",
+            "required": [
+                "companyName",
+                "dateApplied",
+                "jobTitle",
+                "status"
+            ],
+            "properties": {
+                "companyName": {
+                    "type": "string",
+                    "example": "Evil Corp Inc."
+                },
+                "dateApplied": {
+                    "type": "string",
+                    "example": "2025-03-14T12:34:56Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "jobPostingURL": {
+                    "type": "string",
+                    "example": "https://glassbore.com/jobs/swe420692137"
+                },
+                "jobTitle": {
+                    "type": "string",
+                    "example": "Software Engineer"
+                },
+                "maxSalary": {
+                    "type": "number",
+                    "example": 70000
+                },
+                "minSalary": {
+                    "type": "number",
+                    "example": 50000
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Follow up in two weeks"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/db.Status"
+                        }
+                    ],
+                    "example": "IN_PROGRESS"
                 }
             }
         },

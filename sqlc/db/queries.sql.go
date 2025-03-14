@@ -160,6 +160,44 @@ func (q *Queries) ExpireVerificationToken(ctx context.Context, userID pgtype.UUI
 	return err
 }
 
+const getJobApplication = `-- name: GetJobApplication :one
+SELECT id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes FROM job_applications WHERE id = $1 AND user_id = $2
+`
+
+type GetJobApplicationParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID pgtype.UUID `json:"userId"`
+}
+
+type GetJobApplicationRow struct {
+	ID            pgtype.UUID      `json:"id"`
+	CompanyName   string           `json:"companyName"`
+	JobTitle      string           `json:"jobTitle"`
+	DateApplied   pgtype.Timestamp `json:"dateApplied"`
+	Status        Status           `json:"status"`
+	MinSalary     pgtype.Float8    `json:"minSalary"`
+	MaxSalary     pgtype.Float8    `json:"maxSalary"`
+	JobPostingUrl pgtype.Text      `json:"jobPostingUrl"`
+	Notes         pgtype.Text      `json:"notes"`
+}
+
+func (q *Queries) GetJobApplication(ctx context.Context, arg GetJobApplicationParams) (GetJobApplicationRow, error) {
+	row := q.db.QueryRow(ctx, getJobApplication, arg.ID, arg.UserID)
+	var i GetJobApplicationRow
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyName,
+		&i.JobTitle,
+		&i.DateApplied,
+		&i.Status,
+		&i.MinSalary,
+		&i.MaxSalary,
+		&i.JobPostingUrl,
+		&i.Notes,
+	)
+	return i, err
+}
+
 const getPasswordResetToken = `-- name: GetPasswordResetToken :one
 SELECT token, expires_at, user_id FROM password_reset_tokens WHERE token = $1
 `

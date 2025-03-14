@@ -13,8 +13,53 @@ import (
 // TODO
 func (h *Handler) JobApplications(c *gin.Context) {}
 
-// TODO
-func (h *Handler) JobApplication(c *gin.Context) {}
+// JobApplication godoc
+//
+//	@Summary		Retrieve job application details
+//	@Description	Fetches the details of a specific job application by its id
+//	@Tags			Job application
+//	@Accept			json
+//	@Produce		json
+//	@Param			jobApplicationId	path		string	true	"Job application uuid"
+//	@Failure		400					{object}	models.Error
+//	@Failure		404					{object}	models.Error
+//	@Failure		500					{object}	models.Error
+//	@Success		200					{object}	models.JobApplicationResBody
+//	@Router			/job-applications/{jobApplicationId} [get]
+func (h *Handler) JobApplication(c *gin.Context) {
+	userId := c.MustGet("userId").(string)
+
+	uuid, err := common.ToUUID(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jobApplicationId, err := common.ToUUID(c.Param("jobApplicationId"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jobApplication, err := h.queries.GetJobApplication(h.ctx, db.GetJobApplicationParams{
+		ID:     jobApplicationId,
+		UserID: uuid,
+	})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jobApplicationResBody := models.NewJobApplicationResBody(jobApplication)
+
+	c.JSON(http.StatusOK, jobApplicationResBody)
+}
 
 // CreateJobApplication godoc
 //

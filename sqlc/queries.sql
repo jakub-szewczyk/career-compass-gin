@@ -68,6 +68,9 @@ UPDATE users SET password = $2 WHERE id = $1;
 -- name: DeletePasswordResetToken :exec
 DELETE FROM password_reset_tokens WHERE token = $1;
 
+-- name: GetJobApplication :one
+SELECT id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes FROM job_applications WHERE id = $1 AND user_id = $2;
+
 -- name: CreateJobApplication :one
 INSERT INTO job_applications (user_id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
