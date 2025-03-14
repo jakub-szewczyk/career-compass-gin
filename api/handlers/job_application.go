@@ -16,7 +16,18 @@ func (h *Handler) JobApplications(c *gin.Context) {}
 // TODO
 func (h *Handler) JobApplication(c *gin.Context) {}
 
-// TODO
+// CreateJobApplication godoc
+//
+//	@Summary		Submit a new job application
+//	@Description	Processes and creates a new job application with the provided data
+//	@Tags			Job application
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.CreateJobApplicationReqBody	true	"Job application details"
+//	@Failure		400		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Success		201		{object}	models.CreateJobApplicationResBody
+//	@Router			/job-applications [post]
 func (h *Handler) CreateJobApplication(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
