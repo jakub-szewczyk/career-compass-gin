@@ -56,7 +56,9 @@ func TestInitPasswordReset(t *testing.T) {
 func TestResetPassword(t *testing.T) {
 	queries.Purge(ctx)
 
-	user, _ := setUpUser(ctx)
+	setUpUser(ctx)
+
+	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
 
 	token, _ := queries.CreatePasswordResetToken(ctx, user.ID)
 

@@ -25,6 +25,7 @@ var ctx context.Context
 var token string
 var queries *db.Queries
 
+// FIXME: Return value is nil
 func setUpUser(ctx context.Context) (*db.CreateUserRow, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte("qwerty!123456789"), bcrypt.DefaultCost)
 	if err != nil {

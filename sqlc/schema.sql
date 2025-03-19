@@ -17,8 +17,8 @@ CREATE TABLE users (
   email             TEXT NOT NULL UNIQUE,
   password          TEXT NOT NULL,
   is_email_verified BOOLEAN DEFAULT false,
-  created_at        TIMESTAMP DEFAULT NOW(),
-  updated_at        TIMESTAMP DEFAULT NOW()
+  created_at        TIMESTAMPTZ DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER set_user_updated_at_timestamp
@@ -31,9 +31,9 @@ CREATE TABLE verification_tokens (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id    UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   token      TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
-  expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '24 hours',
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '24 hours',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER set_verification_token_updated_at_timestamp
@@ -46,9 +46,9 @@ CREATE TABLE password_reset_tokens (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id    UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   token      TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
-  expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '15 minutes',
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '15 minutes',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER set_password_reset_token_updated_at_timestamp
@@ -64,14 +64,14 @@ CREATE TABLE job_applications (
   user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
   company_name    TEXT NOT NULL,
   job_title       TEXT NOT NULL,
-  date_applied    TIMESTAMP NOT NULL,
+  date_applied    TIMESTAMPTZ NOT NULL,
   status          status NOT NULL DEFAULT 'IN_PROGRESS',
   min_salary      DOUBLE PRECISION,
   max_salary      DOUBLE PRECISION,
   job_posting_url TEXT,
   notes           TEXT,
-  created_at      TIMESTAMP DEFAULT NOW(),
-  updated_at      TIMESTAMP DEFAULT NOW()
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TRIGGER set_job_application_updated_at_timestamp

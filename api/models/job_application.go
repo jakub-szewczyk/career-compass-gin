@@ -43,7 +43,7 @@ type CreateJobApplicationReqBody struct {
 	Notes         string    `json:"notes,omitempty" example:"Follow up in two weeks"`
 }
 
-func NewCreateJobApplicationReqBody(companyName, jobTitle string, dateApplied time.Time, status db.Status, minSalary, maxSalary float64, jobPostingURL string, notes string) CreateJobApplicationReqBody {
+func NewCreateJobApplicationReqBody(companyName, jobTitle string, dateApplied time.Time, status db.Status, minSalary, maxSalary float64, jobPostingURL, notes string) CreateJobApplicationReqBody {
 	return CreateJobApplicationReqBody{
 		CompanyName:   companyName,
 		JobTitle:      jobTitle,
