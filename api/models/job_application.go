@@ -36,7 +36,7 @@ type CreateJobApplicationReqBody struct {
 	CompanyName   string    `json:"companyName" binding:"required" example:"Evil Corp Inc."`
 	JobTitle      string    `json:"jobTitle" binding:"required" example:"Software Engineer"`
 	DateApplied   time.Time `json:"dateApplied" binding:"required" example:"2025-03-14T12:34:56Z"`
-	Status        db.Status `json:"status" binding:"required" example:"IN_PROGRESS"`
+	Status        db.Status `json:"status" binding:"required,oneof=IN_PROGRESS REJECTED ACCEPTED" example:"IN_PROGRESS"`
 	MinSalary     float64   `json:"minSalary,omitempty" example:"50000.00"`
 	MaxSalary     float64   `json:"maxSalary,omitempty" example:"70000.00"`
 	JobPostingURL string    `json:"jobPostingURL,omitempty" example:"https://glassbore.com/jobs/swe420692137"`

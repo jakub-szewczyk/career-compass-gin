@@ -81,5 +81,168 @@ func TestCreateJobApplication(t *testing.T) {
 		assert.Equal(t, jobApplication.Notes.String, resBodyRaw.Notes)
 	})
 
-	// TODO: Missing suites
+	t.Run("invalid payload - missing company name", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		var (
+			companyName   = ""
+			jobTitle      = "Software Engineer"
+			dateApplied   = time.Now().Add(time.Hour * -1)
+			status        = db.StatusINPROGRESS
+			minSalary     = 50_000.00
+			maxSalary     = 70_000.00
+			jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+			notes         = "Follow up in two weeks"
+		)
+
+		bodyRaw := models.NewCreateJobApplicationReqBody(companyName, jobTitle, dateApplied, status, minSalary, maxSalary, jobPostingURL, notes)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("POST", "/api/job-applications", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "CompanyName", "required")
+	})
+
+	t.Run("invalid payload - missing job title", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		var (
+			companyName   = "Evil Corp Inc."
+			jobTitle      = ""
+			dateApplied   = time.Now().Add(time.Hour * -1)
+			status        = db.StatusINPROGRESS
+			minSalary     = 50_000.00
+			maxSalary     = 70_000.00
+			jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+			notes         = "Follow up in two weeks"
+		)
+
+		bodyRaw := models.NewCreateJobApplicationReqBody(companyName, jobTitle, dateApplied, status, minSalary, maxSalary, jobPostingURL, notes)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("POST", "/api/job-applications", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "JobTitle", "required")
+	})
+
+	t.Run("invalid payload - missing date applied", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		var (
+			companyName   = "Evil Corp Inc."
+			jobTitle      = "Software Engineer"
+			dateApplied   = time.Time{}
+			status        = db.StatusINPROGRESS
+			minSalary     = 50_000.00
+			maxSalary     = 70_000.00
+			jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+			notes         = "Follow up in two weeks"
+		)
+
+		bodyRaw := models.NewCreateJobApplicationReqBody(companyName, jobTitle, dateApplied, status, minSalary, maxSalary, jobPostingURL, notes)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("POST", "/api/job-applications", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "DateApplied", "required")
+	})
+
+	t.Run("invalid payload - missing status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		var (
+			companyName             = "Evil Corp Inc."
+			jobTitle                = "Software Engineer"
+			dateApplied             = time.Now().Add(time.Hour * -1)
+			status        db.Status = ""
+			minSalary               = 50_000.00
+			maxSalary               = 70_000.00
+			jobPostingURL           = "https://glassbore.com/jobs/swe420692137"
+			notes                   = "Follow up in two weeks"
+		)
+
+		bodyRaw := models.NewCreateJobApplicationReqBody(companyName, jobTitle, dateApplied, status, minSalary, maxSalary, jobPostingURL, notes)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("POST", "/api/job-applications", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "Status", "required")
+	})
+
+	t.Run("invalid payload - incorrect status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		var (
+			companyName             = "Evil Corp Inc."
+			jobTitle                = "Software Engineer"
+			dateApplied             = time.Now().Add(time.Hour * -1)
+			status        db.Status = "UNKNOWN"
+			minSalary               = 50_000.00
+			maxSalary               = 70_000.00
+			jobPostingURL           = "https://glassbore.com/jobs/swe420692137"
+			notes                   = "Follow up in two weeks"
+		)
+
+		bodyRaw := models.NewCreateJobApplicationReqBody(companyName, jobTitle, dateApplied, status, minSalary, maxSalary, jobPostingURL, notes)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("POST", "/api/job-applications", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "Status", "Field validation for 'Status' failed on the 'oneof' tag")
+	})
 }
