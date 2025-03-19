@@ -2,19 +2,94 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 	common "github.com/jakub-szewczyk/career-compass-gin/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-// TODO: Test getting job application by id
+func TestJobApplication(t *testing.T) {
+	queries.Purge(ctx)
+
+	setUpUser(ctx)
+
+	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+	var (
+		companyName   = "Evil Corp Inc."
+		jobTitle      = "Software Engineer"
+		dateApplied   = time.Now().Add(time.Hour * -1)
+		status        = db.StatusINPROGRESS
+		minSalary     = 50_000.00
+		maxSalary     = 70_000.00
+		jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+		notes         = "Follow up in two weeks"
+	)
+
+	jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+		UserID:        user.ID,
+		CompanyName:   companyName,
+		JobTitle:      jobTitle,
+		DateApplied:   pgtype.Timestamp{Time: dateApplied, Valid: true},
+		Status:        status,
+		MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+		MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+		JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+		Notes:         pgtype.Text{String: notes, Valid: true},
+	})
+
+	t.Run("valid request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("non-existing job application", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications/f4d15edc-e780-42b5-957d-c4352401d9ca", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "no rows in result set")
+	})
+}
 
 func TestCreateJobApplication(t *testing.T) {
 	queries.Purge(ctx)
