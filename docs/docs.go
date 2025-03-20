@@ -504,6 +504,11 @@ const docTemplate = `{
                     "example": "Follow up in two weeks"
                 },
                 "status": {
+                    "enum": [
+                        "IN_PROGRESS",
+                        "REJECTED",
+                        "ACCEPTED"
+                    ],
                     "allOf": [
                         {
                             "$ref": "#/definitions/db.Status"
@@ -527,6 +532,10 @@ const docTemplate = `{
                 "id": {
                     "type": "string",
                     "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "isReplied": {
+                    "type": "boolean",
+                    "example": false
                 },
                 "jobPostingURL": {
                     "type": "string",
@@ -589,12 +598,6 @@ const docTemplate = `{
         },
         "models.JobApplicationResBody": {
             "type": "object",
-            "required": [
-                "companyName",
-                "dateApplied",
-                "jobTitle",
-                "status"
-            ],
             "properties": {
                 "companyName": {
                     "type": "string",
@@ -607,6 +610,10 @@ const docTemplate = `{
                 "id": {
                     "type": "string",
                     "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "isReplied": {
+                    "type": "boolean",
+                    "example": false
                 },
                 "jobPostingURL": {
                     "type": "string",

@@ -18,27 +18,27 @@ RETURNING id, company_name, job_title, date_applied, status, min_salary, max_sal
 `
 
 type CreateJobApplicationParams struct {
-	UserID        pgtype.UUID      `json:"userId"`
-	CompanyName   string           `json:"companyName"`
-	JobTitle      string           `json:"jobTitle"`
-	DateApplied   pgtype.Timestamp `json:"dateApplied"`
-	Status        Status           `json:"status"`
-	MinSalary     pgtype.Float8    `json:"minSalary"`
-	MaxSalary     pgtype.Float8    `json:"maxSalary"`
-	JobPostingUrl pgtype.Text      `json:"jobPostingUrl"`
-	Notes         pgtype.Text      `json:"notes"`
+	UserID        pgtype.UUID        `json:"userId"`
+	CompanyName   string             `json:"companyName"`
+	JobTitle      string             `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        Status             `json:"status"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Notes         pgtype.Text        `json:"notes"`
 }
 
 type CreateJobApplicationRow struct {
-	ID            pgtype.UUID      `json:"id"`
-	CompanyName   string           `json:"companyName"`
-	JobTitle      string           `json:"jobTitle"`
-	DateApplied   pgtype.Timestamp `json:"dateApplied"`
-	Status        Status           `json:"status"`
-	MinSalary     pgtype.Float8    `json:"minSalary"`
-	MaxSalary     pgtype.Float8    `json:"maxSalary"`
-	JobPostingUrl pgtype.Text      `json:"jobPostingUrl"`
-	Notes         pgtype.Text      `json:"notes"`
+	ID            pgtype.UUID        `json:"id"`
+	CompanyName   string             `json:"companyName"`
+	JobTitle      string             `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        Status             `json:"status"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Notes         pgtype.Text        `json:"notes"`
 }
 
 func (q *Queries) CreateJobApplication(ctx context.Context, arg CreateJobApplicationParams) (CreateJobApplicationRow, error) {
@@ -161,7 +161,7 @@ func (q *Queries) ExpireVerificationToken(ctx context.Context, userID pgtype.UUI
 }
 
 const getJobApplication = `-- name: GetJobApplication :one
-SELECT id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes FROM job_applications WHERE id = $1 AND user_id = $2
+SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes FROM job_applications WHERE id = $1 AND user_id = $2
 `
 
 type GetJobApplicationParams struct {
@@ -170,15 +170,16 @@ type GetJobApplicationParams struct {
 }
 
 type GetJobApplicationRow struct {
-	ID            pgtype.UUID      `json:"id"`
-	CompanyName   string           `json:"companyName"`
-	JobTitle      string           `json:"jobTitle"`
-	DateApplied   pgtype.Timestamp `json:"dateApplied"`
-	Status        Status           `json:"status"`
-	MinSalary     pgtype.Float8    `json:"minSalary"`
-	MaxSalary     pgtype.Float8    `json:"maxSalary"`
-	JobPostingUrl pgtype.Text      `json:"jobPostingUrl"`
-	Notes         pgtype.Text      `json:"notes"`
+	ID            pgtype.UUID        `json:"id"`
+	CompanyName   string             `json:"companyName"`
+	JobTitle      string             `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        Status             `json:"status"`
+	IsReplied     bool               `json:"isReplied"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Notes         pgtype.Text        `json:"notes"`
 }
 
 func (q *Queries) GetJobApplication(ctx context.Context, arg GetJobApplicationParams) (GetJobApplicationRow, error) {
@@ -190,6 +191,7 @@ func (q *Queries) GetJobApplication(ctx context.Context, arg GetJobApplicationPa
 		&i.JobTitle,
 		&i.DateApplied,
 		&i.Status,
+		&i.IsReplied,
 		&i.MinSalary,
 		&i.MaxSalary,
 		&i.JobPostingUrl,
@@ -203,9 +205,9 @@ SELECT token, expires_at, user_id FROM password_reset_tokens WHERE token = $1
 `
 
 type GetPasswordResetTokenRow struct {
-	Token     string           `json:"token"`
-	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
-	UserID    pgtype.UUID      `json:"userId"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
+	UserID    pgtype.UUID        `json:"userId"`
 }
 
 func (q *Queries) GetPasswordResetToken(ctx context.Context, token string) (GetPasswordResetTokenRow, error) {
@@ -302,8 +304,8 @@ SELECT token, expires_at FROM verification_tokens WHERE user_id = $1
 `
 
 type GetVerificationTokenRow struct {
-	Token     string           `json:"token"`
-	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
 }
 
 func (q *Queries) GetVerificationToken(ctx context.Context, userID pgtype.UUID) (GetVerificationTokenRow, error) {
@@ -345,8 +347,8 @@ RETURNING token, expires_at
 `
 
 type UpdateVerificationTokenRow struct {
-	Token     string           `json:"token"`
-	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
 }
 
 func (q *Queries) UpdateVerificationToken(ctx context.Context, userID pgtype.UUID) (UpdateVerificationTokenRow, error) {

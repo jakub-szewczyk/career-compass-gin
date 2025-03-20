@@ -66,6 +66,7 @@ CREATE TABLE job_applications (
   job_title       TEXT NOT NULL,
   date_applied    TIMESTAMPTZ NOT NULL,
   status          status NOT NULL DEFAULT 'IN_PROGRESS',
+  is_replied      BOOLEAN NOT NULL DEFAULT FALSE,
   min_salary      DOUBLE PRECISION,
   max_salary      DOUBLE PRECISION,
   job_posting_url TEXT,

@@ -97,7 +97,7 @@ func (h *Handler) CreateJobApplication(c *gin.Context) {
 		UserID:        uuid,
 		CompanyName:   body.CompanyName,
 		JobTitle:      body.JobTitle,
-		DateApplied:   pgtype.Timestamp{Time: body.DateApplied, Valid: true},
+		DateApplied:   pgtype.Timestamptz{Time: body.DateApplied, Valid: true},
 		Status:        db.Status(body.Status),
 		MinSalary:     pgtype.Float8{Float64: body.MinSalary, Valid: true},
 		MaxSalary:     pgtype.Float8{Float64: body.MaxSalary, Valid: true},

@@ -28,6 +28,7 @@ func TestJobApplication(t *testing.T) {
 		jobTitle      = "Software Engineer"
 		dateApplied   = time.Now().Add(time.Hour * -1)
 		status        = db.StatusINPROGRESS
+		isReplied     = false
 		minSalary     = 50_000.00
 		maxSalary     = 70_000.00
 		jobPostingURL = "https://glassbore.com/jobs/swe420692137"
@@ -38,7 +39,7 @@ func TestJobApplication(t *testing.T) {
 		UserID:        user.ID,
 		CompanyName:   companyName,
 		JobTitle:      jobTitle,
-		DateApplied:   pgtype.Timestamp{Time: dateApplied, Valid: true},
+		DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
 		Status:        status,
 		MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
 		MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
@@ -66,6 +67,7 @@ func TestJobApplication(t *testing.T) {
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
 		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
@@ -106,6 +108,7 @@ func TestCreateJobApplication(t *testing.T) {
 			jobTitle      = "Software Engineer"
 			dateApplied   = time.Now().Add(time.Hour * -1)
 			status        = db.StatusINPROGRESS
+			isReplied     = false
 			minSalary     = 50_000.00
 			maxSalary     = 70_000.00
 			jobPostingURL = "https://glassbore.com/jobs/swe420692137"
@@ -132,6 +135,7 @@ func TestCreateJobApplication(t *testing.T) {
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
 		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
@@ -150,6 +154,7 @@ func TestCreateJobApplication(t *testing.T) {
 		assert.Equal(t, jobApplication.JobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, jobApplication.DateApplied.Time.UTC(), resBodyRaw.DateApplied.UTC())
 		assert.Equal(t, jobApplication.Status, resBodyRaw.Status)
+		assert.Equal(t, jobApplication.IsReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, jobApplication.MinSalary.Float64, resBodyRaw.MinSalary)
 		assert.Equal(t, jobApplication.MaxSalary.Float64, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobApplication.JobPostingUrl.String, resBodyRaw.JobPostingURL)

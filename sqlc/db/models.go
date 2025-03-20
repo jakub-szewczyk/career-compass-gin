@@ -55,45 +55,46 @@ func (ns NullStatus) Value() (driver.Value, error) {
 }
 
 type JobApplication struct {
-	ID            pgtype.UUID      `json:"id"`
-	CompanyName   string           `json:"companyName"`
-	JobTitle      string           `json:"jobTitle"`
-	DateApplied   pgtype.Timestamp `json:"dateApplied"`
-	Status        Status           `json:"status"`
-	MinSalary     pgtype.Float8    `json:"minSalary"`
-	MaxSalary     pgtype.Float8    `json:"maxSalary"`
-	JobPostingUrl pgtype.Text      `json:"jobPostingUrl"`
-	Notes         pgtype.Text      `json:"notes"`
-	CreatedAt     pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamp `json:"updatedAt"`
-	UserID        pgtype.UUID      `json:"userId"`
+	ID            pgtype.UUID        `json:"id"`
+	CompanyName   string             `json:"companyName"`
+	JobTitle      string             `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        Status             `json:"status"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Notes         pgtype.Text        `json:"notes"`
+	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
+	UserID        pgtype.UUID        `json:"userId"`
+	IsReplied     bool               `json:"isReplied"`
 }
 
 type PasswordResetToken struct {
-	ID        pgtype.UUID      `json:"id"`
-	UserID    pgtype.UUID      `json:"userId"`
-	Token     string           `json:"token"`
-	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
-	CreatedAt pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt pgtype.Timestamp `json:"updatedAt"`
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"userId"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
 }
 
 type User struct {
-	Email           string           `json:"email"`
-	Password        string           `json:"password"`
-	FirstName       string           `json:"firstName"`
-	LastName        string           `json:"lastName"`
-	ID              pgtype.UUID      `json:"id"`
-	CreatedAt       pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt       pgtype.Timestamp `json:"updatedAt"`
-	IsEmailVerified pgtype.Bool      `json:"isEmailVerified"`
+	Email           string             `json:"email"`
+	Password        string             `json:"password"`
+	FirstName       string             `json:"firstName"`
+	LastName        string             `json:"lastName"`
+	ID              pgtype.UUID        `json:"id"`
+	CreatedAt       pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt       pgtype.Timestamptz `json:"updatedAt"`
+	IsEmailVerified pgtype.Bool        `json:"isEmailVerified"`
 }
 
 type VerificationToken struct {
-	ID        pgtype.UUID      `json:"id"`
-	UserID    pgtype.UUID      `json:"userId"`
-	Token     string           `json:"token"`
-	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
-	CreatedAt pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt pgtype.Timestamp `json:"updatedAt"`
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"userId"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
 }

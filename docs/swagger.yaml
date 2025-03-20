@@ -36,6 +36,10 @@ definitions:
       status:
         allOf:
         - $ref: '#/definitions/db.Status'
+        enum:
+        - IN_PROGRESS
+        - REJECTED
+        - ACCEPTED
         example: IN_PROGRESS
     required:
     - companyName
@@ -54,6 +58,9 @@ definitions:
       id:
         example: f4d15edc-e780-42b5-957d-c4352401d9ca
         type: string
+      isReplied:
+        example: false
+        type: boolean
       jobPostingURL:
         example: https://glassbore.com/jobs/swe420692137
         type: string
@@ -104,6 +111,9 @@ definitions:
       id:
         example: f4d15edc-e780-42b5-957d-c4352401d9ca
         type: string
+      isReplied:
+        example: false
+        type: boolean
       jobPostingURL:
         example: https://glassbore.com/jobs/swe420692137
         type: string
@@ -123,11 +133,6 @@ definitions:
         allOf:
         - $ref: '#/definitions/db.Status'
         example: IN_PROGRESS
-    required:
-    - companyName
-    - dateApplied
-    - jobTitle
-    - status
     type: object
   models.ProfileResBody:
     properties:
