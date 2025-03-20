@@ -36,7 +36,50 @@ const docTemplate = `{
             }
         },
         "/job-applications": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of job applications with support for sorting, filtering, and pagination",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job application"
+                ],
+                "summary": "Get job applications",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.JobApplicationsResBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Processes and creates a new job application with the provided data",
                 "consumes": [
                     "application/json"
@@ -83,6 +126,11 @@ const docTemplate = `{
         },
         "/job-applications/{jobApplicationId}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches the details of a specific job application by its id",
                 "consumes": [
                     "application/json"
@@ -596,6 +644,51 @@ const docTemplate = `{
                 }
             }
         },
+        "models.JobApplication": {
+            "type": "object",
+            "properties": {
+                "companyName": {
+                    "type": "string",
+                    "example": "Evil Corp Inc."
+                },
+                "dateApplied": {
+                    "type": "string",
+                    "example": "2025-03-14T12:34:56Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "isReplied": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "jobPostingURL": {
+                    "type": "string",
+                    "example": "https://glassbore.com/jobs/swe420692137"
+                },
+                "jobTitle": {
+                    "type": "string",
+                    "example": "Software Engineer"
+                },
+                "maxSalary": {
+                    "type": "number",
+                    "example": 70000
+                },
+                "minSalary": {
+                    "type": "number",
+                    "example": 50000
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/db.Status"
+                        }
+                    ],
+                    "example": "IN_PROGRESS"
+                }
+            }
+        },
         "models.JobApplicationResBody": {
             "type": "object",
             "properties": {
@@ -642,6 +735,25 @@ const docTemplate = `{
                         }
                     ],
                     "example": "IN_PROGRESS"
+                }
+            }
+        },
+        "models.JobApplicationsResBody": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.JobApplication"
+                    }
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "size": {
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },

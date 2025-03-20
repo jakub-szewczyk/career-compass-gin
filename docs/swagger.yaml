@@ -100,6 +100,37 @@ definitions:
     required:
     - email
     type: object
+  models.JobApplication:
+    properties:
+      companyName:
+        example: Evil Corp Inc.
+        type: string
+      dateApplied:
+        example: "2025-03-14T12:34:56Z"
+        type: string
+      id:
+        example: f4d15edc-e780-42b5-957d-c4352401d9ca
+        type: string
+      isReplied:
+        example: false
+        type: boolean
+      jobPostingURL:
+        example: https://glassbore.com/jobs/swe420692137
+        type: string
+      jobTitle:
+        example: Software Engineer
+        type: string
+      maxSalary:
+        example: 70000
+        type: number
+      minSalary:
+        example: 50000
+        type: number
+      status:
+        allOf:
+        - $ref: '#/definitions/db.Status'
+        example: IN_PROGRESS
+    type: object
   models.JobApplicationResBody:
     properties:
       companyName:
@@ -133,6 +164,19 @@ definitions:
         allOf:
         - $ref: '#/definitions/db.Status'
         example: IN_PROGRESS
+    type: object
+  models.JobApplicationsResBody:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.JobApplication'
+        type: array
+      page:
+        example: 0
+        type: integer
+      size:
+        example: 10
+        type: integer
     type: object
   models.ProfileResBody:
     properties:
@@ -251,6 +295,31 @@ paths:
       tags:
       - Health check
   /job-applications:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of job applications with support for sorting,
+        filtering, and pagination
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JobApplicationsResBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Get job applications
+      tags:
+      - Job application
     post:
       consumes:
       - application/json
@@ -277,6 +346,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
       summary: Submit a new job application
       tags:
       - Job application
@@ -310,6 +381,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
       summary: Retrieve job application details
       tags:
       - Job application

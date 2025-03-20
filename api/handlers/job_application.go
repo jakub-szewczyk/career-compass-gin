@@ -10,13 +10,59 @@ import (
 	common "github.com/jakub-szewczyk/career-compass-gin/utils"
 )
 
-// TODO
-func (h *Handler) JobApplications(c *gin.Context) {}
+// JobApplications godoc
+//
+//	@Summary		Get job applications
+//	@Description	Retrieves a list of job applications with support for sorting, filtering, and pagination
+//
+//	@Security		BearerAuth
+//
+//	@Tags			Job application
+//	@Accept			json
+//	@Produce		json
+//	@Failure		400	{object}	models.Error
+//	@Failure		500	{object}	models.Error
+//	@Success		200	{object}	models.JobApplicationsResBody
+//	@Router			/job-applications [get]
+func (h *Handler) JobApplications(c *gin.Context) {
+	userId := c.MustGet("userId").(string)
+
+	uuid, err := common.ToUUID(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// TODO: Read from query params
+	page := 0
+	size := 10
+
+	jobApplications, err := h.queries.GetJobApplications(h.ctx, db.GetJobApplicationsParams{
+		Limit:  int32(size),
+		Offset: int32(page * size),
+		UserID: uuid,
+	})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jobApplicationsResBody := models.NewJobApplicationsResBody(page, size, jobApplications)
+
+	c.JSON(http.StatusOK, jobApplicationsResBody)
+}
 
 // JobApplication godoc
 //
 //	@Summary		Retrieve job application details
 //	@Description	Fetches the details of a specific job application by its id
+//
+//	@Security		BearerAuth
+//
 //	@Tags			Job application
 //	@Accept			json
 //	@Produce		json
@@ -65,6 +111,9 @@ func (h *Handler) JobApplication(c *gin.Context) {
 //
 //	@Summary		Submit a new job application
 //	@Description	Processes and creates a new job application with the provided data
+//
+//	@Security		BearerAuth
+//
 //	@Tags			Job application
 //	@Accept			json
 //	@Produce		json

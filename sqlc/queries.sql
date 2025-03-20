@@ -68,6 +68,25 @@ UPDATE users SET password = $2 WHERE id = $1;
 -- name: DeletePasswordResetToken :exec
 DELETE FROM password_reset_tokens WHERE token = $1;
 
+-- name: GetJobApplications :many
+SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url
+FROM job_applications
+WHERE user_id = $3
+ORDER BY
+  CASE WHEN @company_name_asc::bool THEN company_name END ASC,
+  CASE WHEN @company_name_desc::bool THEN company_name END DESC,
+  CASE WHEN @job_title_asc::bool THEN job_title END ASC,
+  CASE WHEN @job_title_desc::bool THEN job_title END DESC,
+  CASE WHEN @date_applied_asc::bool THEN date_applied END ASC,
+  CASE WHEN @date_applied_desc::bool THEN date_applied END DESC,
+  CASE WHEN @status_asc::bool THEN status END ASC,
+  CASE WHEN @status_desc::bool THEN status END DESC,
+  CASE WHEN @salary_asc::bool THEN greatest(min_salary, max_salary) END ASC,
+  CASE WHEN @salary_desc::bool THEN greatest(min_salary, max_salary) END DESC,
+  CASE WHEN @is_replied_asc::bool THEN is_replied END ASC,
+  CASE WHEN @is_replied_desc::bool THEN is_replied END DESC
+LIMIT $1 OFFSET $2;
+
 -- name: GetJobApplication :one
 SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes FROM job_applications WHERE id = $1 AND user_id = $2;
 

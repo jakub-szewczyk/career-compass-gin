@@ -200,6 +200,102 @@ func (q *Queries) GetJobApplication(ctx context.Context, arg GetJobApplicationPa
 	return i, err
 }
 
+const getJobApplications = `-- name: GetJobApplications :many
+SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url
+FROM job_applications
+WHERE user_id = $3
+ORDER BY
+  CASE WHEN $4::bool THEN company_name END ASC,
+  CASE WHEN $5::bool THEN company_name END DESC,
+  CASE WHEN $6::bool THEN job_title END ASC,
+  CASE WHEN $7::bool THEN job_title END DESC,
+  CASE WHEN $8::bool THEN date_applied END ASC,
+  CASE WHEN $9::bool THEN date_applied END DESC,
+  CASE WHEN $10::bool THEN status END ASC,
+  CASE WHEN $11::bool THEN status END DESC,
+  CASE WHEN $12::bool THEN greatest(min_salary, max_salary) END ASC,
+  CASE WHEN $13::bool THEN greatest(min_salary, max_salary) END DESC,
+  CASE WHEN $14::bool THEN is_replied END ASC,
+  CASE WHEN $15::bool THEN is_replied END DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetJobApplicationsParams struct {
+	Limit           int32       `json:"limit"`
+	Offset          int32       `json:"offset"`
+	UserID          pgtype.UUID `json:"userId"`
+	CompanyNameAsc  bool        `json:"companyNameAsc"`
+	CompanyNameDesc bool        `json:"companyNameDesc"`
+	JobTitleAsc     bool        `json:"jobTitleAsc"`
+	JobTitleDesc    bool        `json:"jobTitleDesc"`
+	DateAppliedAsc  bool        `json:"dateAppliedAsc"`
+	DateAppliedDesc bool        `json:"dateAppliedDesc"`
+	StatusAsc       bool        `json:"statusAsc"`
+	StatusDesc      bool        `json:"statusDesc"`
+	SalaryAsc       bool        `json:"salaryAsc"`
+	SalaryDesc      bool        `json:"salaryDesc"`
+	IsRepliedAsc    bool        `json:"isRepliedAsc"`
+	IsRepliedDesc   bool        `json:"isRepliedDesc"`
+}
+
+type GetJobApplicationsRow struct {
+	ID            pgtype.UUID        `json:"id"`
+	CompanyName   string             `json:"companyName"`
+	JobTitle      string             `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        Status             `json:"status"`
+	IsReplied     bool               `json:"isReplied"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+}
+
+func (q *Queries) GetJobApplications(ctx context.Context, arg GetJobApplicationsParams) ([]GetJobApplicationsRow, error) {
+	rows, err := q.db.Query(ctx, getJobApplications,
+		arg.Limit,
+		arg.Offset,
+		arg.UserID,
+		arg.CompanyNameAsc,
+		arg.CompanyNameDesc,
+		arg.JobTitleAsc,
+		arg.JobTitleDesc,
+		arg.DateAppliedAsc,
+		arg.DateAppliedDesc,
+		arg.StatusAsc,
+		arg.StatusDesc,
+		arg.SalaryAsc,
+		arg.SalaryDesc,
+		arg.IsRepliedAsc,
+		arg.IsRepliedDesc,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetJobApplicationsRow
+	for rows.Next() {
+		var i GetJobApplicationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CompanyName,
+			&i.JobTitle,
+			&i.DateApplied,
+			&i.Status,
+			&i.IsReplied,
+			&i.MinSalary,
+			&i.MaxSalary,
+			&i.JobPostingUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPasswordResetToken = `-- name: GetPasswordResetToken :one
 SELECT token, expires_at, user_id FROM password_reset_tokens WHERE token = $1
 `
