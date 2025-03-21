@@ -316,6 +316,24 @@ paths:
         minimum: 0
         name: size
         type: integer
+      - default: -date_applied
+        description: Sortable column name
+        enum:
+        - company_name
+        - -company_name
+        - job_title
+        - -job_title
+        - date_applied
+        - -date_applied
+        - status
+        - -status
+        - salary
+        - -salary
+        - is_replied
+        - -is_replied
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:

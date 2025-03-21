@@ -6,9 +6,27 @@ import (
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 )
 
+type Sort string
+
+const (
+	CompanyNameAsc  Sort = "company_name"
+	CompanyNameDesc Sort = "-company_name"
+	JobTitleAsc     Sort = "job_title"
+	JobTitleDesc    Sort = "-job_title"
+	DateAppliedAsc  Sort = "date_applied"
+	DateAppliedDesc Sort = "-date_applied"
+	StatusAsc       Sort = "status"
+	StatusDesc      Sort = "-status"
+	SalaryAsc       Sort = "salary"
+	SalaryDesc      Sort = "-salary"
+	IsRepliedAsc    Sort = "is_replied"
+	IsRepliedDesc   Sort = "-is_replied"
+)
+
 type JobApplicationsQueryParams struct {
-	Page int `form:"page" binding:"min=0"`
-	Size int `form:"size" binding:"min=0"`
+	Page int  `form:"page" binding:"min=0"`
+	Size int  `form:"size" binding:"min=0"`
+	Sort Sort `form:"sort" binding:"omitempty,oneof=company_name -company_name job_title -job_title date_applied -date_applied status -status salary -salary is_replied -is_replied"`
 }
 
 type jobApplicationEntry struct {

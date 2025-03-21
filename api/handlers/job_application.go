@@ -20,8 +20,9 @@ import (
 //	@Tags			Job application
 //	@Accept			json
 //	@Produce		json
-//	@Param			page	query		int	false	"Page number (zero-indexed)"	minimum(0)	default(0)
-//	@Param			size	query		int	false	"Page size"						minimum(0)	default(10)
+//	@Param			page	query		int		false	"Page number (zero-indexed)"	minimum(0)																																			default(0)
+//	@Param			size	query		int		false	"Page size"						minimum(0)																																			default(10)
+//	@Param			sort	query		string	false	"Sortable column name"			Enums(company_name, -company_name, job_title, -job_title, date_applied, -date_applied, status, -status, salary, -salary, is_replied, -is_replied)	default(-date_applied)
 //	@Failure		400		{object}	models.Error
 //	@Failure		500		{object}	models.Error
 //	@Success		200		{object}	models.JobApplicationsResBody
@@ -50,13 +51,27 @@ func (h *Handler) JobApplications(c *gin.Context) {
 		queryParams.Size = 10
 	}
 
-	// TODO:
-	// - Support sorting by company name, job title, date applied, status, salary, and replied column.
-	// - Support filtering by company name, job title, date applied, and status.
+	if c.Query("sort") == "" {
+		queryParams.Sort = models.DateAppliedDesc
+	}
+
+	// TODO: Support filtering by company name, job title, date applied, and status
 	jobApplications, err := h.queries.GetJobApplications(h.ctx, db.GetJobApplicationsParams{
-		Limit:  int32(queryParams.Size),
-		Offset: int32(queryParams.Page * queryParams.Size),
-		UserID: uuid,
+		Limit:           int32(queryParams.Size),
+		Offset:          int32(queryParams.Page * queryParams.Size),
+		UserID:          uuid,
+		CompanyNameAsc:  queryParams.Sort == models.CompanyNameAsc,
+		CompanyNameDesc: queryParams.Sort == models.CompanyNameDesc,
+		JobTitleAsc:     queryParams.Sort == models.JobTitleAsc,
+		JobTitleDesc:    queryParams.Sort == models.JobTitleDesc,
+		DateAppliedAsc:  queryParams.Sort == models.DateAppliedAsc,
+		DateAppliedDesc: queryParams.Sort == models.DateAppliedDesc,
+		StatusAsc:       queryParams.Sort == models.StatusAsc,
+		StatusDesc:      queryParams.Sort == models.StatusDesc,
+		SalaryAsc:       queryParams.Sort == models.SalaryAsc,
+		SalaryDesc:      queryParams.Sort == models.SalaryDesc,
+		IsRepliedAsc:    queryParams.Sort == models.IsRepliedAsc,
+		IsRepliedDesc:   queryParams.Sort == models.IsRepliedDesc,
 	})
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{

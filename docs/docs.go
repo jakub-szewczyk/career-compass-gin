@@ -69,6 +69,27 @@ const docTemplate = `{
                         "description": "Page size",
                         "name": "size",
                         "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "company_name",
+                            "-company_name",
+                            "job_title",
+                            "-job_title",
+                            "date_applied",
+                            "-date_applied",
+                            "status",
+                            "-status",
+                            "salary",
+                            "-salary",
+                            "is_replied",
+                            "-is_replied"
+                        ],
+                        "type": "string",
+                        "default": "-date_applied",
+                        "description": "Sortable column name",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {
