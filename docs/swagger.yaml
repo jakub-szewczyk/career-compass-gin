@@ -100,37 +100,6 @@ definitions:
     required:
     - email
     type: object
-  models.JobApplication:
-    properties:
-      companyName:
-        example: Evil Corp Inc.
-        type: string
-      dateApplied:
-        example: "2025-03-14T12:34:56Z"
-        type: string
-      id:
-        example: f4d15edc-e780-42b5-957d-c4352401d9ca
-        type: string
-      isReplied:
-        example: false
-        type: boolean
-      jobPostingURL:
-        example: https://glassbore.com/jobs/swe420692137
-        type: string
-      jobTitle:
-        example: Software Engineer
-        type: string
-      maxSalary:
-        example: 70000
-        type: number
-      minSalary:
-        example: 50000
-        type: number
-      status:
-        allOf:
-        - $ref: '#/definitions/db.Status'
-        example: IN_PROGRESS
-    type: object
   models.JobApplicationResBody:
     properties:
       companyName:
@@ -169,13 +138,16 @@ definitions:
     properties:
       data:
         items:
-          $ref: '#/definitions/models.JobApplication'
+          $ref: '#/definitions/models.jobApplicationEntry'
         type: array
       page:
         example: 0
         type: integer
       size:
         example: 10
+        type: integer
+      total:
+        example: 100
         type: integer
     type: object
   models.ProfileResBody:
@@ -277,6 +249,37 @@ definitions:
     required:
     - verificationToken
     type: object
+  models.jobApplicationEntry:
+    properties:
+      companyName:
+        example: Evil Corp Inc.
+        type: string
+      dateApplied:
+        example: "2025-03-14T12:34:56Z"
+        type: string
+      id:
+        example: f4d15edc-e780-42b5-957d-c4352401d9ca
+        type: string
+      isReplied:
+        example: false
+        type: boolean
+      jobPostingURL:
+        example: https://glassbore.com/jobs/swe420692137
+        type: string
+      jobTitle:
+        example: Software Engineer
+        type: string
+      maxSalary:
+        example: 70000
+        type: number
+      minSalary:
+        example: 50000
+        type: number
+      status:
+        allOf:
+        - $ref: '#/definitions/db.Status'
+        example: IN_PROGRESS
+    type: object
 info:
   contact: {}
   title: Career Compass REST API
@@ -300,6 +303,19 @@ paths:
       - application/json
       description: Retrieves a list of job applications with support for sorting,
         filtering, and pagination
+      parameters:
+      - default: 0
+        description: Page number (zero-indexed)
+        in: query
+        minimum: 0
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        minimum: 0
+        name: size
+        type: integer
       produces:
       - application/json
       responses:

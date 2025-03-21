@@ -47,7 +47,7 @@ func (h *Handler) Profile(c *gin.Context) {
 		return
 	}
 
-	profileResBody, err := models.NewProfileResBody(user)
+	resBody, err := models.NewProfileResBody(user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -55,7 +55,7 @@ func (h *Handler) Profile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profileResBody)
+	c.JSON(http.StatusOK, resBody)
 }
 
 // SendVerificationEmail godoc
@@ -210,7 +210,7 @@ func (h *Handler) VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	profileResBody, err := models.NewProfileResBody(user)
+	resBody, err := models.NewProfileResBody(user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -218,5 +218,5 @@ func (h *Handler) VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profileResBody)
+	c.JSON(http.StatusOK, resBody)
 }

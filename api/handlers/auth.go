@@ -74,7 +74,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 		return
 	}
 
-	signUpResBody, err := models.NewSignUpResBody(user, signed)
+	resBody, err := models.NewSignUpResBody(user, signed)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -82,7 +82,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, signUpResBody)
+	c.JSON(http.StatusCreated, resBody)
 
 	// TODO: Consider using goroutines
 	tmpl, err := template.ParseFiles(filepath.Join("templates", "sign-up.html"))
@@ -169,7 +169,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 		return
 	}
 
-	signInResBody, err := models.NewSignInResBody(user, signed)
+	resBody, err := models.NewSignInResBody(user, signed)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -177,5 +177,5 @@ func (h *Handler) SignIn(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, signInResBody)
+	c.JSON(http.StatusOK, resBody)
 }

@@ -201,22 +201,30 @@ func (q *Queries) GetJobApplication(ctx context.Context, arg GetJobApplicationPa
 }
 
 const getJobApplications = `-- name: GetJobApplications :many
-SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url
-FROM job_applications
-WHERE user_id = $3
-ORDER BY
-  CASE WHEN $4::bool THEN company_name END ASC,
-  CASE WHEN $5::bool THEN company_name END DESC,
-  CASE WHEN $6::bool THEN job_title END ASC,
-  CASE WHEN $7::bool THEN job_title END DESC,
-  CASE WHEN $8::bool THEN date_applied END ASC,
-  CASE WHEN $9::bool THEN date_applied END DESC,
-  CASE WHEN $10::bool THEN status END ASC,
-  CASE WHEN $11::bool THEN status END DESC,
-  CASE WHEN $12::bool THEN greatest(min_salary, max_salary) END ASC,
-  CASE WHEN $13::bool THEN greatest(min_salary, max_salary) END DESC,
-  CASE WHEN $14::bool THEN is_replied END ASC,
-  CASE WHEN $15::bool THEN is_replied END DESC
+WITH user_job_applications AS (
+  SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url
+  FROM job_applications
+  WHERE user_id = $3
+), 
+filtered_job_applications AS (
+  SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, COUNT(*) OVER() AS total
+  FROM user_job_applications
+  ORDER BY
+    CASE WHEN $4::bool THEN company_name END ASC,
+    CASE WHEN $5::bool THEN company_name END DESC,
+    CASE WHEN $6::bool THEN job_title END ASC,
+    CASE WHEN $7::bool THEN job_title END DESC,
+    CASE WHEN $8::bool THEN date_applied END ASC,
+    CASE WHEN $9::bool THEN date_applied END DESC,
+    CASE WHEN $10::bool THEN status END ASC,
+    CASE WHEN $11::bool THEN status END DESC,
+    CASE WHEN $12::bool THEN greatest(min_salary, max_salary) END ASC,
+    CASE WHEN $13::bool THEN greatest(min_salary, max_salary) END DESC,
+    CASE WHEN $14::bool THEN is_replied END ASC,
+    CASE WHEN $15::bool THEN is_replied END DESC
+)
+SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, total
+FROM filtered_job_applications
 LIMIT $1 OFFSET $2
 `
 
@@ -248,6 +256,7 @@ type GetJobApplicationsRow struct {
 	MinSalary     pgtype.Float8      `json:"minSalary"`
 	MaxSalary     pgtype.Float8      `json:"maxSalary"`
 	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Total         int64              `json:"total"`
 }
 
 func (q *Queries) GetJobApplications(ctx context.Context, arg GetJobApplicationsParams) ([]GetJobApplicationsRow, error) {
@@ -285,6 +294,7 @@ func (q *Queries) GetJobApplications(ctx context.Context, arg GetJobApplications
 			&i.MinSalary,
 			&i.MaxSalary,
 			&i.JobPostingUrl,
+			&i.Total,
 		); err != nil {
 			return nil, err
 		}

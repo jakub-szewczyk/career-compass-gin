@@ -53,6 +53,24 @@ const docTemplate = `{
                     "Job application"
                 ],
                 "summary": "Get job applications",
+                "parameters": [
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Page number (zero-indexed)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -644,51 +662,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.JobApplication": {
-            "type": "object",
-            "properties": {
-                "companyName": {
-                    "type": "string",
-                    "example": "Evil Corp Inc."
-                },
-                "dateApplied": {
-                    "type": "string",
-                    "example": "2025-03-14T12:34:56Z"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
-                },
-                "isReplied": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "jobPostingURL": {
-                    "type": "string",
-                    "example": "https://glassbore.com/jobs/swe420692137"
-                },
-                "jobTitle": {
-                    "type": "string",
-                    "example": "Software Engineer"
-                },
-                "maxSalary": {
-                    "type": "number",
-                    "example": 70000
-                },
-                "minSalary": {
-                    "type": "number",
-                    "example": 50000
-                },
-                "status": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/db.Status"
-                        }
-                    ],
-                    "example": "IN_PROGRESS"
-                }
-            }
-        },
         "models.JobApplicationResBody": {
             "type": "object",
             "properties": {
@@ -744,7 +717,7 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.JobApplication"
+                        "$ref": "#/definitions/models.jobApplicationEntry"
                     }
                 },
                 "page": {
@@ -754,6 +727,10 @@ const docTemplate = `{
                 "size": {
                     "type": "integer",
                     "example": 10
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },
@@ -891,6 +868,51 @@ const docTemplate = `{
                 "verificationToken": {
                     "type": "string",
                     "example": "2cc313c8b72f8e5b725e07130d0b851811f2e60c8b19f085b3aa58d1516ef767"
+                }
+            }
+        },
+        "models.jobApplicationEntry": {
+            "type": "object",
+            "properties": {
+                "companyName": {
+                    "type": "string",
+                    "example": "Evil Corp Inc."
+                },
+                "dateApplied": {
+                    "type": "string",
+                    "example": "2025-03-14T12:34:56Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "isReplied": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "jobPostingURL": {
+                    "type": "string",
+                    "example": "https://glassbore.com/jobs/swe420692137"
+                },
+                "jobTitle": {
+                    "type": "string",
+                    "example": "Software Engineer"
+                },
+                "maxSalary": {
+                    "type": "number",
+                    "example": 70000
+                },
+                "minSalary": {
+                    "type": "number",
+                    "example": 50000
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/db.Status"
+                        }
+                    ],
+                    "example": "IN_PROGRESS"
                 }
             }
         }

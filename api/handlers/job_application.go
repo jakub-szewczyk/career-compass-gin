@@ -20,9 +20,11 @@ import (
 //	@Tags			Job application
 //	@Accept			json
 //	@Produce		json
-//	@Failure		400	{object}	models.Error
-//	@Failure		500	{object}	models.Error
-//	@Success		200	{object}	models.JobApplicationsResBody
+//	@Param			page	query		int	false	"Page number (zero-indexed)"	minimum(0)	default(0)
+//	@Param			size	query		int	false	"Page size"						minimum(0)	default(10)
+//	@Failure		400		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Success		200		{object}	models.JobApplicationsResBody
 //	@Router			/job-applications [get]
 func (h *Handler) JobApplications(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
@@ -35,13 +37,25 @@ func (h *Handler) JobApplications(c *gin.Context) {
 		return
 	}
 
-	// TODO: Read from query params
-	page := 0
-	size := 10
+	var queryParams models.JobApplicationsQueryParams
 
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if c.Query("size") == "" {
+		queryParams.Size = 10
+	}
+
+	// TODO:
+	// - Support sorting by company name, job title, date applied, status, salary, and replied column.
+	// - Support filtering by company name, job title, date applied, and status.
 	jobApplications, err := h.queries.GetJobApplications(h.ctx, db.GetJobApplicationsParams{
-		Limit:  int32(size),
-		Offset: int32(page * size),
+		Limit:  int32(queryParams.Size),
+		Offset: int32(queryParams.Page * queryParams.Size),
 		UserID: uuid,
 	})
 	if err != nil {
@@ -51,9 +65,9 @@ func (h *Handler) JobApplications(c *gin.Context) {
 		return
 	}
 
-	jobApplicationsResBody := models.NewJobApplicationsResBody(page, size, jobApplications)
+	resBody := models.NewJobApplicationsResBody(queryParams.Page, queryParams.Size, jobApplications)
 
-	c.JSON(http.StatusOK, jobApplicationsResBody)
+	c.JSON(http.StatusOK, resBody)
 }
 
 // JobApplication godoc
@@ -102,9 +116,9 @@ func (h *Handler) JobApplication(c *gin.Context) {
 		return
 	}
 
-	jobApplicationResBody := models.NewJobApplicationResBody(jobApplication)
+	resBody := models.NewJobApplicationResBody(jobApplication)
 
-	c.JSON(http.StatusOK, jobApplicationResBody)
+	c.JSON(http.StatusOK, resBody)
 }
 
 // CreateJobApplication godoc
@@ -160,9 +174,9 @@ func (h *Handler) CreateJobApplication(c *gin.Context) {
 		return
 	}
 
-	createJobApplicationResBody := models.NewCreateJobApplicationResBody(jobApplication)
+	resBody := models.NewCreateJobApplicationResBody(jobApplication)
 
-	c.JSON(http.StatusCreated, createJobApplicationResBody)
+	c.JSON(http.StatusCreated, resBody)
 }
 
 // TODO

@@ -6,6 +6,11 @@ import (
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 )
 
+type JobApplicationsQueryParams struct {
+	Page int `form:"page" binding:"min=0"`
+	Size int `form:"size" binding:"min=0"`
+}
+
 type jobApplicationEntry struct {
 	ID            string    `json:"id" example:"f4d15edc-e780-42b5-957d-c4352401d9ca"`
 	CompanyName   string    `json:"companyName" example:"Evil Corp Inc."`
@@ -19,13 +24,14 @@ type jobApplicationEntry struct {
 }
 
 type JobApplicationsResBody struct {
-	Page int                   `json:"page" example:"0"`
-	Size int                   `json:"size" example:"10"`
-	Data []jobApplicationEntry `json:"data"`
+	Page  int                   `json:"page" example:"0"`
+	Size  int                   `json:"size" example:"10"`
+	Total int                   `json:"total" example:"100"`
+	Data  []jobApplicationEntry `json:"data"`
 }
 
 func NewJobApplicationsResBody(page, size int, jobApplications []db.GetJobApplicationsRow) JobApplicationsResBody {
-	var data []jobApplicationEntry
+	data := []jobApplicationEntry{}
 
 	for _, jobApplication := range jobApplications {
 		data = append(data, jobApplicationEntry{
@@ -41,10 +47,17 @@ func NewJobApplicationsResBody(page, size int, jobApplications []db.GetJobApplic
 		})
 	}
 
+	total := 0
+
+	if len(jobApplications) > 0 {
+		total = int(jobApplications[0].Total)
+	}
+
 	return JobApplicationsResBody{
-		Page: page,
-		Size: size,
-		Data: data,
+		Page:  page,
+		Size:  size,
+		Total: total,
+		Data:  data,
 	}
 }
 
