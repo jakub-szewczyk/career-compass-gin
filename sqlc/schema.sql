@@ -64,7 +64,7 @@ CREATE TABLE job_applications (
   user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
   company_name    TEXT NOT NULL,
   job_title       TEXT NOT NULL,
-  date_applied    TIMESTAMPTZ NOT NULL,
+  date_applied    TIMESTAMPTZ NOT NULL, -- TODO: Update to `DATE` type
   status          status NOT NULL DEFAULT 'IN_PROGRESS',
   is_replied      BOOLEAN NOT NULL DEFAULT FALSE,
   min_salary      DOUBLE PRECISION,

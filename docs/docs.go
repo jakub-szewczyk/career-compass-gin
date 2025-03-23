@@ -90,6 +90,23 @@ const docTemplate = `{
                         "description": "Sortable column name",
                         "name": "sort",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date applied",
+                        "name": "date_applied",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "IN_PROGRESS",
+                            "REJECTED",
+                            "ACCEPTED"
+                        ],
+                        "type": "string",
+                        "description": "Status",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {

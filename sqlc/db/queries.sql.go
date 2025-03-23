@@ -209,19 +209,23 @@ WITH user_job_applications AS (
 filtered_job_applications AS (
   SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, COUNT(*) OVER() AS total
   FROM user_job_applications
+  WHERE 
+    (company_name ILIKE '%' || $4::text || '%' OR job_title ILIKE '%' || $4::text || '%' OR $4::text IS NULL)
+    AND (((date_applied AT TIME ZONE 'Europe/Warsaw')::date = (($5) AT TIME ZONE 'Europe/Warsaw')::date) OR $5 IS NULL)
+    AND (status = nullif($6, '')::status OR nullif($6, '') IS NULL)
   ORDER BY
-    CASE WHEN $4::bool THEN company_name END ASC,
-    CASE WHEN $5::bool THEN company_name END DESC,
-    CASE WHEN $6::bool THEN job_title END ASC,
-    CASE WHEN $7::bool THEN job_title END DESC,
-    CASE WHEN $8::bool THEN date_applied END ASC,
-    CASE WHEN $9::bool THEN date_applied END DESC,
-    CASE WHEN $10::bool THEN status END ASC,
-    CASE WHEN $11::bool THEN status END DESC,
-    CASE WHEN $12::bool THEN greatest(min_salary, max_salary) END ASC,
-    CASE WHEN $13::bool THEN greatest(min_salary, max_salary) END DESC,
-    CASE WHEN $14::bool THEN is_replied END ASC,
-    CASE WHEN $15::bool THEN is_replied END DESC
+    CASE WHEN $7::bool THEN company_name END ASC,
+    CASE WHEN $8::bool THEN company_name END DESC,
+    CASE WHEN $9::bool THEN job_title END ASC,
+    CASE WHEN $10::bool THEN job_title END DESC,
+    CASE WHEN $11::bool THEN date_applied END ASC,
+    CASE WHEN $12::bool THEN date_applied END DESC,
+    CASE WHEN $13::bool THEN status END ASC,
+    CASE WHEN $14::bool THEN status END DESC,
+    CASE WHEN $15::bool THEN greatest(min_salary, max_salary) END ASC,
+    CASE WHEN $16::bool THEN greatest(min_salary, max_salary) END DESC,
+    CASE WHEN $17::bool THEN is_replied END ASC,
+    CASE WHEN $18::bool THEN is_replied END DESC
 )
 SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, total
 FROM filtered_job_applications
@@ -232,6 +236,9 @@ type GetJobApplicationsParams struct {
 	Limit           int32       `json:"limit"`
 	Offset          int32       `json:"offset"`
 	UserID          pgtype.UUID `json:"userId"`
+	Name            string      `json:"name"`
+	DateApplied     interface{} `json:"dateApplied"`
+	Status          interface{} `json:"status"`
 	CompanyNameAsc  bool        `json:"companyNameAsc"`
 	CompanyNameDesc bool        `json:"companyNameDesc"`
 	JobTitleAsc     bool        `json:"jobTitleAsc"`
@@ -264,6 +271,9 @@ func (q *Queries) GetJobApplications(ctx context.Context, arg GetJobApplications
 		arg.Limit,
 		arg.Offset,
 		arg.UserID,
+		arg.Name,
+		arg.DateApplied,
+		arg.Status,
 		arg.CompanyNameAsc,
 		arg.CompanyNameDesc,
 		arg.JobTitleAsc,

@@ -75,8 +75,12 @@ WITH user_job_applications AS (
   WHERE user_id = $3
 ), 
 filtered_job_applications AS (
-  SELECT *, COUNT(*) OVER() AS total
+  SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, COUNT(*) OVER() AS total
   FROM user_job_applications
+  WHERE 
+    (company_name ILIKE '%' || @name::text || '%' OR job_title ILIKE '%' || @name::text || '%' OR @name::text IS NULL)
+    AND (((date_applied AT TIME ZONE 'Europe/Warsaw')::date = ((@date_applied) AT TIME ZONE 'Europe/Warsaw')::date) OR @date_applied IS NULL)
+    AND (status = nullif(@status, '')::status OR nullif(@status, '') IS NULL)
   ORDER BY
     CASE WHEN @company_name_asc::bool THEN company_name END ASC,
     CASE WHEN @company_name_desc::bool THEN company_name END DESC,

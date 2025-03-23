@@ -334,6 +334,18 @@ paths:
         in: query
         name: sort
         type: string
+      - description: Date applied
+        in: query
+        name: date_applied
+        type: string
+      - description: Status
+        enum:
+        - IN_PROGRESS
+        - REJECTED
+        - ACCEPTED
+        in: query
+        name: status
+        type: string
       produces:
       - application/json
       responses:

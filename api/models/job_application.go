@@ -24,9 +24,11 @@ const (
 )
 
 type JobApplicationsQueryParams struct {
-	Page int  `form:"page" binding:"min=0"`
-	Size int  `form:"size" binding:"min=0"`
-	Sort Sort `form:"sort" binding:"omitempty,oneof=company_name -company_name job_title -job_title date_applied -date_applied status -status salary -salary is_replied -is_replied"`
+	Page        int       `form:"page" binding:"min=0"`
+	Size        int       `form:"size" binding:"min=0"`
+	Sort        Sort      `form:"sort" binding:"omitempty,oneof=company_name -company_name job_title -job_title date_applied -date_applied status -status salary -salary is_replied -is_replied"`
+	DateApplied string    `form:"date_applied" binding:"omitempty,datetime=2006-01-02"`
+	Status      db.Status `form:"status" binding:"omitempty,oneof=IN_PROGRESS REJECTED ACCEPTED"`
 }
 
 type jobApplicationEntry struct {
