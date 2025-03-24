@@ -21,14 +21,15 @@ import (
 //	@Tags			Job application
 //	@Accept			json
 //	@Produce		json
-//	@Param			page			query		int		false	"Page number (zero-indexed)"	minimum(0)																																			default(0)
-//	@Param			size			query		int		false	"Page size"						minimum(0)																																			default(10)
-//	@Param			sort			query		string	false	"Sortable column name"			Enums(company_name, -company_name, job_title, -job_title, date_applied, -date_applied, status, -status, salary, -salary, is_replied, -is_replied)	default(-date_applied)
-//	@Param			date_applied	query		string	false	"Date applied"
-//	@Param			status			query		string	false	"Status"	Enums(IN_PROGRESS, REJECTED, ACCEPTED)
-//	@Failure		400				{object}	models.Error
-//	@Failure		500				{object}	models.Error
-//	@Success		200				{object}	models.JobApplicationsResBody
+//	@Param			page						query		int		false	"Page number (zero-indexed)"	minimum(0)																																			default(0)
+//	@Param			size						query		int		false	"Page size"						minimum(0)																																			default(10)
+//	@Param			sort						query		string	false	"Sortable column name"			Enums(company_name, -company_name, job_title, -job_title, date_applied, -date_applied, status, -status, salary, -salary, is_replied, -is_replied)	default(-date_applied)
+//	@Param			company_name_or_job_title	query		string	false	"Company name or job title"
+//	@Param			date_applied				query		string	false	"Date applied"
+//	@Param			status						query		string	false	"Status"	Enums(IN_PROGRESS, REJECTED, ACCEPTED)
+//	@Failure		400							{object}	models.Error
+//	@Failure		500							{object}	models.Error
+//	@Success		200							{object}	models.JobApplicationsResBody
 //	@Router			/job-applications [get]
 func (h *Handler) JobApplications(c *gin.Context) {
 	userId := c.MustGet("userId").(string)

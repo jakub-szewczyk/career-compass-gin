@@ -93,6 +93,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Company name or job title",
+                        "name": "company_name_or_job_title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Date applied",
                         "name": "date_applied",
                         "in": "query"
