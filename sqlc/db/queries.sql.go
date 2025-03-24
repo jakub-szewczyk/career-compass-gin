@@ -233,24 +233,24 @@ LIMIT $1 OFFSET $2
 `
 
 type GetJobApplicationsParams struct {
-	Limit           int32       `json:"limit"`
-	Offset          int32       `json:"offset"`
-	UserID          pgtype.UUID `json:"userId"`
-	Name            string      `json:"name"`
-	DateApplied     interface{} `json:"dateApplied"`
-	Status          interface{} `json:"status"`
-	CompanyNameAsc  bool        `json:"companyNameAsc"`
-	CompanyNameDesc bool        `json:"companyNameDesc"`
-	JobTitleAsc     bool        `json:"jobTitleAsc"`
-	JobTitleDesc    bool        `json:"jobTitleDesc"`
-	DateAppliedAsc  bool        `json:"dateAppliedAsc"`
-	DateAppliedDesc bool        `json:"dateAppliedDesc"`
-	StatusAsc       bool        `json:"statusAsc"`
-	StatusDesc      bool        `json:"statusDesc"`
-	SalaryAsc       bool        `json:"salaryAsc"`
-	SalaryDesc      bool        `json:"salaryDesc"`
-	IsRepliedAsc    bool        `json:"isRepliedAsc"`
-	IsRepliedDesc   bool        `json:"isRepliedDesc"`
+	Limit                 int32       `json:"limit"`
+	Offset                int32       `json:"offset"`
+	UserID                pgtype.UUID `json:"userId"`
+	CompanyNameOrJobTitle string      `json:"companyNameOrJobTitle"`
+	DateApplied           interface{} `json:"dateApplied"`
+	Status                interface{} `json:"status"`
+	CompanyNameAsc        bool        `json:"companyNameAsc"`
+	CompanyNameDesc       bool        `json:"companyNameDesc"`
+	JobTitleAsc           bool        `json:"jobTitleAsc"`
+	JobTitleDesc          bool        `json:"jobTitleDesc"`
+	DateAppliedAsc        bool        `json:"dateAppliedAsc"`
+	DateAppliedDesc       bool        `json:"dateAppliedDesc"`
+	StatusAsc             bool        `json:"statusAsc"`
+	StatusDesc            bool        `json:"statusDesc"`
+	SalaryAsc             bool        `json:"salaryAsc"`
+	SalaryDesc            bool        `json:"salaryDesc"`
+	IsRepliedAsc          bool        `json:"isRepliedAsc"`
+	IsRepliedDesc         bool        `json:"isRepliedDesc"`
 }
 
 type GetJobApplicationsRow struct {
@@ -271,7 +271,7 @@ func (q *Queries) GetJobApplications(ctx context.Context, arg GetJobApplications
 		arg.Limit,
 		arg.Offset,
 		arg.UserID,
-		arg.Name,
+		arg.CompanyNameOrJobTitle,
 		arg.DateApplied,
 		arg.Status,
 		arg.CompanyNameAsc,

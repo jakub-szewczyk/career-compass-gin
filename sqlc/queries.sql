@@ -78,7 +78,7 @@ filtered_job_applications AS (
   SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, COUNT(*) OVER() AS total
   FROM user_job_applications
   WHERE 
-    (company_name ILIKE '%' || @name::text || '%' OR job_title ILIKE '%' || @name::text || '%' OR @name::text IS NULL)
+    (company_name ILIKE '%' || @company_name_or_job_title::text || '%' OR job_title ILIKE '%' || @company_name_or_job_title::text || '%' OR @company_name_or_job_title::text IS NULL)
     AND (((date_applied AT TIME ZONE 'Europe/Warsaw')::date = ((@date_applied) AT TIME ZONE 'Europe/Warsaw')::date) OR @date_applied IS NULL)
     AND (status = nullif(@status, '')::status OR nullif(@status, '') IS NULL)
   ORDER BY

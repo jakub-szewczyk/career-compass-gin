@@ -12,7 +12,7 @@ func ToUUID(s string) (pgtype.UUID, error) {
 	return uuid, err
 }
 
-func CoalesceTime(date time.Time) interface{} {
+func NullifyTime(date time.Time) interface{} {
 	if date.IsZero() {
 		return nil
 	}

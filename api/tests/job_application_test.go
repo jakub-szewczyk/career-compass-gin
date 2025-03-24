@@ -16,6 +16,685 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestJobApplications(t *testing.T) {
+	queries.Purge(ctx)
+
+	setUpUser(ctx)
+
+	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+	softwareEngineer, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+		UserID:        user.ID,
+		CompanyName:   "Evil Corp Inc.",
+		JobTitle:      "Software Engineer",
+		DateApplied:   pgtype.Timestamptz{Time: time.Now().Add(time.Hour * -24 * 2), Valid: true},
+		Status:        db.StatusINPROGRESS,
+		MinSalary:     pgtype.Float8{Float64: 50_000.00, Valid: true},
+		MaxSalary:     pgtype.Float8{Float64: 70_000.00, Valid: true},
+		JobPostingUrl: pgtype.Text{String: "https://glassbore.com/jobs/swe420692137", Valid: true},
+	})
+	iOSDeveloper, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+		UserID:        user.ID,
+		CompanyName:   "Apple",
+		JobTitle:      "iOS Developer",
+		DateApplied:   pgtype.Timestamptz{Time: time.Now().Add(time.Hour * -24), Valid: true},
+		Status:        db.StatusREJECTED,
+		MinSalary:     pgtype.Float8{Float64: 100_000.00, Valid: true},
+		MaxSalary:     pgtype.Float8{Float64: 125_000.00, Valid: true},
+		JobPostingUrl: pgtype.Text{String: "https://glassbore.com/jobs/ios420692137", Valid: true},
+	})
+	angularDeveloper, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+		UserID:        user.ID,
+		CompanyName:   "Google",
+		JobTitle:      "Angular Developer",
+		DateApplied:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		Status:        db.StatusACCEPTED,
+		MinSalary:     pgtype.Float8{Float64: 70_000.00, Valid: true},
+		MaxSalary:     pgtype.Float8{Float64: 90_000.00, Valid: true},
+		JobPostingUrl: pgtype.Text{String: "https://glassbore.com/jobs/fe420692137", Valid: true},
+	})
+
+	t.Run("valid request - default query params", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - second page", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?page=1&size=1", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 1, resBodyRaw.Page)
+		assert.Equal(t, 1, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 1)
+	})
+
+	t.Run("valid request - third page", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?page=2&size=1", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 2, resBodyRaw.Page)
+		assert.Equal(t, 1, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 1)
+	})
+
+	t.Run("valid request - sort ascending by company name", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=company_name", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort descending by company name", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=-company_name", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort ascending by job title", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=job_title", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort descending by job title", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=-job_title", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort ascending by date applied", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=date_applied", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort descending by date applied", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=-date_applied", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort ascending by status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=status", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort descending by status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=-status", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort ascending by salary", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=salary", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	t.Run("valid request - sort descending by salary", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/job-applications?sort=-salary", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationsResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.NotEmpty(t, resBodyRaw.Data[0].ID, "missing job application id")
+		assert.Equal(t, iOSDeveloper.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, iOSDeveloper.CompanyName, resBodyRaw.Data[0].CompanyName)
+		assert.Equal(t, iOSDeveloper.JobTitle, resBodyRaw.Data[0].JobTitle)
+		assert.Equal(t, iOSDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[0].DateApplied.UTC())
+		assert.Equal(t, iOSDeveloper.Status, resBodyRaw.Data[0].Status)
+		assert.Equal(t, false, resBodyRaw.Data[0].IsReplied)
+		assert.Equal(t, iOSDeveloper.MinSalary.Float64, resBodyRaw.Data[0].MinSalary)
+		assert.Equal(t, iOSDeveloper.MaxSalary.Float64, resBodyRaw.Data[0].MaxSalary)
+		assert.Equal(t, iOSDeveloper.JobPostingUrl.String, resBodyRaw.Data[0].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[1].ID, "missing job application id")
+		assert.Equal(t, angularDeveloper.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, angularDeveloper.CompanyName, resBodyRaw.Data[1].CompanyName)
+		assert.Equal(t, angularDeveloper.JobTitle, resBodyRaw.Data[1].JobTitle)
+		assert.Equal(t, angularDeveloper.DateApplied.Time.UTC(), resBodyRaw.Data[1].DateApplied.UTC())
+		assert.Equal(t, angularDeveloper.Status, resBodyRaw.Data[1].Status)
+		assert.Equal(t, false, resBodyRaw.Data[1].IsReplied)
+		assert.Equal(t, angularDeveloper.MinSalary.Float64, resBodyRaw.Data[1].MinSalary)
+		assert.Equal(t, angularDeveloper.MaxSalary.Float64, resBodyRaw.Data[1].MaxSalary)
+		assert.Equal(t, angularDeveloper.JobPostingUrl.String, resBodyRaw.Data[1].JobPostingURL)
+
+		assert.NotEmpty(t, resBodyRaw.Data[2].ID, "missing job application id")
+		assert.Equal(t, softwareEngineer.ID.String(), resBodyRaw.Data[2].ID)
+		assert.Equal(t, softwareEngineer.CompanyName, resBodyRaw.Data[2].CompanyName)
+		assert.Equal(t, softwareEngineer.JobTitle, resBodyRaw.Data[2].JobTitle)
+		assert.Equal(t, softwareEngineer.DateApplied.Time.UTC(), resBodyRaw.Data[2].DateApplied.UTC())
+		assert.Equal(t, softwareEngineer.Status, resBodyRaw.Data[2].Status)
+		assert.Equal(t, false, resBodyRaw.Data[2].IsReplied)
+		assert.Equal(t, softwareEngineer.MinSalary.Float64, resBodyRaw.Data[2].MinSalary)
+		assert.Equal(t, softwareEngineer.MaxSalary.Float64, resBodyRaw.Data[2].MaxSalary)
+		assert.Equal(t, softwareEngineer.JobPostingUrl.String, resBodyRaw.Data[2].JobPostingURL)
+	})
+
+	// TODO: Test sorting by reply
+
+	// TODO: Test filtering by company name or job title, date applied, and status
+}
+
 func TestJobApplication(t *testing.T) {
 	queries.Purge(ctx)
 

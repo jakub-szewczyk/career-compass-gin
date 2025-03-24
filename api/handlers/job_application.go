@@ -70,9 +70,11 @@ func (h *Handler) JobApplications(c *gin.Context) {
 	}
 
 	jobApplications, err := h.queries.GetJobApplications(h.ctx, db.GetJobApplicationsParams{
-		Limit:           int32(queryParams.Size),
-		Offset:          int32(queryParams.Page * queryParams.Size),
-		UserID:          uuid,
+		UserID: uuid,
+
+		Limit:  int32(queryParams.Size),
+		Offset: int32(queryParams.Page * queryParams.Size),
+
 		CompanyNameAsc:  queryParams.Sort == models.CompanyNameAsc,
 		CompanyNameDesc: queryParams.Sort == models.CompanyNameDesc,
 		JobTitleAsc:     queryParams.Sort == models.JobTitleAsc,
@@ -85,8 +87,10 @@ func (h *Handler) JobApplications(c *gin.Context) {
 		SalaryDesc:      queryParams.Sort == models.SalaryDesc,
 		IsRepliedAsc:    queryParams.Sort == models.IsRepliedAsc,
 		IsRepliedDesc:   queryParams.Sort == models.IsRepliedDesc,
-		DateApplied:     common.CoalesceTime(dateApplied),
-		Status:          queryParams.Status,
+
+		CompanyNameOrJobTitle: queryParams.CompanyNameOrJobTitle,
+		DateApplied:           common.NullifyTime(dateApplied),
+		Status:                queryParams.Status,
 	})
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
