@@ -1148,10 +1148,6 @@ func TestCreateJobApplication(t *testing.T) {
 func TestUpdateJobApplication(t *testing.T) {
 	queries.Purge(ctx)
 
-	setUpUser(ctx)
-
-	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
-
 	var (
 		companyName   = "Evil Corp Inc."
 		jobTitle      = "Software Engineer"
@@ -1164,24 +1160,31 @@ func TestUpdateJobApplication(t *testing.T) {
 		notes         = "Follow up in two weeks"
 	)
 
-	jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
-		UserID:        user.ID,
-		CompanyName:   companyName,
-		JobTitle:      jobTitle,
-		DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
-		Status:        status,
-		MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
-		MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
-		JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
-		Notes:         pgtype.Text{String: notes, Valid: true},
-	})
-
 	t.Run("valid request - changing company name", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
-		bodyRaw := models.UpdateJobApplicationReqBody{
-			CompanyName: "Google",
-		}
+		companyName := new(string)
+		*companyName = "Google"
+
+		bodyRaw := models.NewUpdateJobApplicationReqBody(companyName, nil, nil, nil, nil, nil, nil, nil, nil)
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
 		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
@@ -1189,7 +1192,7 @@ func TestUpdateJobApplication(t *testing.T) {
 
 		r.ServeHTTP(w, req)
 
-		var resBodyRaw models.JobApplicationResBody
+		var resBodyRaw models.UpdateJobApplicationResBody
 		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
 
 		assert.NoError(t, err, "error unmarshaling response body")
@@ -1197,7 +1200,7 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
-		assert.Equal(t, "Google", resBodyRaw.CompanyName)
+		assert.Equal(t, *companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
 		assert.Equal(t, status, resBodyRaw.Status)
@@ -1209,10 +1212,31 @@ func TestUpdateJobApplication(t *testing.T) {
 	})
 
 	t.Run("valid request - changing job title", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
+		jobTitle := new(string)
+		*jobTitle = "Angular Developer"
+
 		bodyRaw := models.UpdateJobApplicationReqBody{
-			JobTitle: "Angular Developer",
+			JobTitle: jobTitle,
 		}
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
@@ -1230,7 +1254,7 @@ func TestUpdateJobApplication(t *testing.T) {
 
 		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
-		assert.Equal(t, "Angular Developer", resBodyRaw.JobTitle)
+		assert.Equal(t, *jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
 		assert.Equal(t, status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
@@ -1241,9 +1265,28 @@ func TestUpdateJobApplication(t *testing.T) {
 	})
 
 	t.Run("valid request - changing date applied", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
-		dateApplied := time.Date(2006, 02, 01, 0, 0, 0, 0, time.UTC)
+		dateApplied := new(time.Time)
+		*dateApplied = time.Date(2006, 02, 01, 0, 0, 0, 0, time.UTC)
 
 		bodyRaw := models.UpdateJobApplicationReqBody{
 			DateApplied: dateApplied,
@@ -1275,10 +1318,31 @@ func TestUpdateJobApplication(t *testing.T) {
 	})
 
 	t.Run("valid request - changing status", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
+		status := new(db.Status)
+		*status = db.StatusREJECTED
+
 		bodyRaw := models.UpdateJobApplicationReqBody{
-			Status: db.StatusREJECTED,
+			Status: status,
 		}
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
@@ -1298,7 +1362,7 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
-		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, *status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
@@ -1307,10 +1371,31 @@ func TestUpdateJobApplication(t *testing.T) {
 	})
 
 	t.Run("valid request - changing is replied", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
+		isReplied := new(bool)
+		*isReplied = true
+
 		bodyRaw := models.UpdateJobApplicationReqBody{
-			IsReplied: true,
+			IsReplied: isReplied,
 		}
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
@@ -1330,8 +1415,8 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
-		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
-		assert.Equal(t, true, resBodyRaw.IsReplied)
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, *isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
@@ -1339,10 +1424,31 @@ func TestUpdateJobApplication(t *testing.T) {
 	})
 
 	t.Run("valid request - changing min salary", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
+		minSalary := new(float64)
+		*minSalary = 2137.00
+
 		bodyRaw := models.UpdateJobApplicationReqBody{
-			MinSalary: 2137.00,
+			MinSalary: minSalary,
 		}
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
@@ -1362,19 +1468,40 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
-		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
-		assert.Equal(t, 2137.00, resBodyRaw.MinSalary)
+		assert.Equal(t, *minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
 		assert.Equal(t, notes, resBodyRaw.Notes)
 	})
 
 	t.Run("valid request - changing max salary", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
+		maxSalary := new(float64)
+		*maxSalary = 42069.00
+
 		bodyRaw := models.UpdateJobApplicationReqBody{
-			MaxSalary: 42069.00,
+			MaxSalary: maxSalary,
 		}
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
@@ -1394,19 +1521,40 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
-		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
-		assert.Equal(t, 42069.00, resBodyRaw.MaxSalary)
+		assert.Equal(t, *maxSalary, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
 		assert.Equal(t, notes, resBodyRaw.Notes)
 	})
 
 	t.Run("valid request - changing job posting URL", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
+		jobPostingURL := new(string)
+		*jobPostingURL = "https://glassbore.com/jobs/fe420692137"
+
 		bodyRaw := models.UpdateJobApplicationReqBody{
-			JobPostingURL: "https://glassbore.com/jobs/fe420692137",
+			JobPostingURL: jobPostingURL,
 		}
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
@@ -1426,19 +1574,40 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
-		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
-		assert.Equal(t, "https://glassbore.com/jobs/fe420692137", resBodyRaw.JobPostingURL)
+		assert.Equal(t, *jobPostingURL, resBodyRaw.JobPostingURL)
 		assert.Equal(t, notes, resBodyRaw.Notes)
 	})
 
 	t.Run("valid request - changing notes", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
 		w := httptest.NewRecorder()
 
+		notes := new(string)
+		*notes = "Follow up in a week"
+
 		bodyRaw := models.UpdateJobApplicationReqBody{
-			Notes: "Follow up in a week",
+			Notes: notes,
 		}
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
@@ -1458,11 +1627,11 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
-		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
-		assert.Equal(t, "Follow up in a week", resBodyRaw.Notes)
+		assert.Equal(t, *notes, resBodyRaw.Notes)
 	})
 }

@@ -14,7 +14,7 @@ import (
 const createJobApplication = `-- name: CreateJobApplication :one
 INSERT INTO job_applications (user_id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes
+RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes
 `
 
 type CreateJobApplicationParams struct {
@@ -35,6 +35,7 @@ type CreateJobApplicationRow struct {
 	JobTitle      string             `json:"jobTitle"`
 	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
 	Status        Status             `json:"status"`
+	IsReplied     bool               `json:"isReplied"`
 	MinSalary     pgtype.Float8      `json:"minSalary"`
 	MaxSalary     pgtype.Float8      `json:"maxSalary"`
 	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
@@ -60,6 +61,7 @@ func (q *Queries) CreateJobApplication(ctx context.Context, arg CreateJobApplica
 		&i.JobTitle,
 		&i.DateApplied,
 		&i.Status,
+		&i.IsReplied,
 		&i.MinSalary,
 		&i.MaxSalary,
 		&i.JobPostingUrl,
@@ -432,12 +434,85 @@ func (q *Queries) GetVerificationToken(ctx context.Context, userID pgtype.UUID) 
 }
 
 const purge = `-- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens, password_reset_tokens
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications
 `
 
 func (q *Queries) Purge(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, purge)
 	return err
+}
+
+const updateJobApplication = `-- name: UpdateJobApplication :one
+UPDATE job_applications
+SET 
+  company_name = COALESCE($3, company_name),
+  job_title = COALESCE($4, job_title),
+  date_applied = COALESCE($5, date_applied),
+  status = COALESCE($6, status),
+  is_replied = COALESCE($7, is_replied),
+  min_salary = COALESCE($8, min_salary),
+  max_salary = COALESCE($9, max_salary),
+  job_posting_url = COALESCE($10, job_posting_url),
+  notes = COALESCE($11, notes)
+WHERE id = $1 AND user_id = $2
+RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes
+`
+
+type UpdateJobApplicationParams struct {
+	ID            pgtype.UUID        `json:"id"`
+	UserID        pgtype.UUID        `json:"userId"`
+	CompanyName   pgtype.Text        `json:"companyName"`
+	JobTitle      pgtype.Text        `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        NullStatus         `json:"status"`
+	IsReplied     pgtype.Bool        `json:"isReplied"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Notes         pgtype.Text        `json:"notes"`
+}
+
+type UpdateJobApplicationRow struct {
+	ID            pgtype.UUID        `json:"id"`
+	CompanyName   string             `json:"companyName"`
+	JobTitle      string             `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        Status             `json:"status"`
+	IsReplied     bool               `json:"isReplied"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Notes         pgtype.Text        `json:"notes"`
+}
+
+func (q *Queries) UpdateJobApplication(ctx context.Context, arg UpdateJobApplicationParams) (UpdateJobApplicationRow, error) {
+	row := q.db.QueryRow(ctx, updateJobApplication,
+		arg.ID,
+		arg.UserID,
+		arg.CompanyName,
+		arg.JobTitle,
+		arg.DateApplied,
+		arg.Status,
+		arg.IsReplied,
+		arg.MinSalary,
+		arg.MaxSalary,
+		arg.JobPostingUrl,
+		arg.Notes,
+	)
+	var i UpdateJobApplicationRow
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyName,
+		&i.JobTitle,
+		&i.DateApplied,
+		&i.Status,
+		&i.IsReplied,
+		&i.MinSalary,
+		&i.MaxSalary,
+		&i.JobPostingUrl,
+		&i.Notes,
+	)
+	return i, err
 }
 
 const updatePassword = `-- name: UpdatePassword :exec

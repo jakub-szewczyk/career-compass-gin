@@ -214,8 +214,90 @@ func (h *Handler) CreateJobApplication(c *gin.Context) {
 	c.JSON(http.StatusCreated, resBody)
 }
 
-// TODO
-func (h *Handler) UpdateJobApplication(c *gin.Context) {}
+// TODO: Document
+func (h *Handler) UpdateJobApplication(c *gin.Context) {
+	userId := c.MustGet("userId").(string)
 
-// TODO
+	uuid, err := common.ToUUID(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jobApplicationId, err := common.ToUUID(c.Param("jobApplicationId"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	var body models.UpdateJobApplicationReqBody
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	params := db.UpdateJobApplicationParams{}
+
+	// TODO: Refactor
+	if body.CompanyName != nil {
+		params.CompanyName = pgtype.Text{String: *body.CompanyName, Valid: true}
+	}
+	if body.JobTitle != nil {
+		params.JobTitle = pgtype.Text{String: *body.JobTitle, Valid: true}
+	}
+	if body.DateApplied != nil {
+		params.DateApplied = pgtype.Timestamptz{Time: *body.DateApplied, Valid: true}
+	}
+	if body.Status != nil {
+		params.Status = db.NullStatus{Status: *body.Status, Valid: true}
+	}
+	if body.IsReplied != nil {
+		params.IsReplied = pgtype.Bool{Bool: *body.IsReplied, Valid: true}
+	}
+	if body.MinSalary != nil {
+		params.MinSalary = pgtype.Float8{Float64: *body.MinSalary, Valid: true}
+	}
+	if body.MaxSalary != nil {
+		params.MaxSalary = pgtype.Float8{Float64: *body.MaxSalary, Valid: true}
+	}
+	if body.JobPostingURL != nil {
+		params.JobPostingUrl = pgtype.Text{String: *body.JobPostingURL, Valid: true}
+	}
+	if body.Notes != nil {
+		params.Notes = pgtype.Text{String: *body.Notes, Valid: true}
+	}
+
+	jobApplication, err := h.queries.UpdateJobApplication(h.ctx, db.UpdateJobApplicationParams{
+		ID:            jobApplicationId,
+		UserID:        uuid,
+		CompanyName:   params.CompanyName,
+		JobTitle:      params.JobTitle,
+		DateApplied:   params.DateApplied,
+		Status:        params.Status,
+		IsReplied:     params.IsReplied,
+		MinSalary:     params.MinSalary,
+		MaxSalary:     params.MaxSalary,
+		JobPostingUrl: params.JobPostingUrl,
+		Notes:         params.Notes,
+	})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	resBody := models.NewUpdateJobApplicationResBody(jobApplication)
+
+	c.JSON(http.StatusOK, resBody)
+}
+
+// TODO: Implement
 func (h *Handler) DeleteJobApplication(c *gin.Context) {}

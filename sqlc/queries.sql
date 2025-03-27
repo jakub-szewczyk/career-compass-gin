@@ -1,5 +1,5 @@
 -- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens, password_reset_tokens;
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications;
 
 -- name: CreateUser :one
 WITH new_user AS (
@@ -105,4 +105,19 @@ SELECT id, company_name, job_title, date_applied, status, is_replied, min_salary
 -- name: CreateJobApplication :one
 INSERT INTO job_applications (user_id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, company_name, job_title, date_applied, status, min_salary, max_salary, job_posting_url, notes;
+RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes;
+
+-- name: UpdateJobApplication :one
+UPDATE job_applications
+SET 
+  company_name = COALESCE(sqlc.narg('company_name'), company_name),
+  job_title = COALESCE(sqlc.narg('job_title'), job_title),
+  date_applied = COALESCE(sqlc.narg('date_applied'), date_applied),
+  status = COALESCE(sqlc.narg('status'), status),
+  is_replied = COALESCE(sqlc.narg('is_replied'), is_replied),
+  min_salary = COALESCE(sqlc.narg('min_salary'), min_salary),
+  max_salary = COALESCE(sqlc.narg('max_salary'), max_salary),
+  job_posting_url = COALESCE(sqlc.narg('job_posting_url'), job_posting_url),
+  notes = COALESCE(sqlc.narg('notes'), notes)
+WHERE id = $1 AND user_id = $2
+RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes;

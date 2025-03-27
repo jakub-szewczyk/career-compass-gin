@@ -154,6 +154,7 @@ func NewCreateJobApplicationResBody(jobApplication db.CreateJobApplicationRow) C
 		JobTitle:      jobApplication.JobTitle,
 		DateApplied:   jobApplication.DateApplied.Time.UTC(),
 		Status:        jobApplication.Status,
+		IsReplied:     jobApplication.IsReplied,
 		MinSalary:     jobApplication.MinSalary.Float64,
 		MaxSalary:     jobApplication.MaxSalary.Float64,
 		JobPostingURL: jobApplication.JobPostingUrl.String,
@@ -162,18 +163,18 @@ func NewCreateJobApplicationResBody(jobApplication db.CreateJobApplicationRow) C
 }
 
 type UpdateJobApplicationReqBody struct {
-	CompanyName   string    `json:"companyName,omitempty" example:"Evil Corp Inc."`
-	JobTitle      string    `json:"jobTitle,omitempty" example:"Software Engineer"`
-	DateApplied   time.Time `json:"dateApplied,omitempty" example:"2025-03-14T12:34:56Z"`
-	Status        db.Status `json:"status,omitempty" binding:"oneof=IN_PROGRESS REJECTED ACCEPTED" example:"IN_PROGRESS"`
-	IsReplied     bool      `json:"isReplied,omitempty" example:"false"`
-	MinSalary     float64   `json:"minSalary,omitempty" example:"50000.00"`
-	MaxSalary     float64   `json:"maxSalary,omitempty" example:"70000.00"`
-	JobPostingURL string    `json:"jobPostingURL,omitempty" example:"https://glassbore.com/jobs/swe420692137"`
-	Notes         string    `json:"notes,omitempty" example:"Follow up in two weeks"`
+	CompanyName   *string    `json:"companyName,omitempty" example:"Evil Corp Inc."`
+	JobTitle      *string    `json:"jobTitle,omitempty" example:"Software Engineer"`
+	DateApplied   *time.Time `json:"dateApplied,omitempty" example:"2025-03-14T12:34:56Z"`
+	Status        *db.Status `json:"status,omitempty" binding:"omitempty,oneof=IN_PROGRESS REJECTED ACCEPTED" example:"IN_PROGRESS"`
+	IsReplied     *bool      `json:"isReplied,omitempty" example:"false"`
+	MinSalary     *float64   `json:"minSalary,omitempty" example:"50000.00"`
+	MaxSalary     *float64   `json:"maxSalary,omitempty" example:"70000.00"`
+	JobPostingURL *string    `json:"jobPostingURL,omitempty" example:"https://glassbore.com/jobs/swe420692137"`
+	Notes         *string    `json:"notes,omitempty" example:"Follow up in two weeks"`
 }
 
-func NewUpdateJobApplicationReqBody(companyName, jobTitle string, dateApplied time.Time, status db.Status, isReplied bool, minSalary, maxSalary float64, jobPostingURL, notes string) UpdateJobApplicationReqBody {
+func NewUpdateJobApplicationReqBody(companyName, jobTitle *string, dateApplied *time.Time, status *db.Status, isReplied *bool, minSalary, maxSalary *float64, jobPostingURL, notes *string) UpdateJobApplicationReqBody {
 	return UpdateJobApplicationReqBody{
 		CompanyName:   companyName,
 		JobTitle:      jobTitle,
@@ -184,5 +185,33 @@ func NewUpdateJobApplicationReqBody(companyName, jobTitle string, dateApplied ti
 		MaxSalary:     maxSalary,
 		JobPostingURL: jobPostingURL,
 		Notes:         notes,
+	}
+}
+
+type UpdateJobApplicationResBody struct {
+	ID            string    `json:"id" example:"f4d15edc-e780-42b5-957d-c4352401d9ca"`
+	CompanyName   string    `json:"companyName" example:"Evil Corp Inc."`
+	JobTitle      string    `json:"jobTitle" example:"Software Engineer"`
+	DateApplied   time.Time `json:"dateApplied" example:"2025-03-14T12:34:56Z"`
+	Status        db.Status `json:"status" example:"IN_PROGRESS"`
+	IsReplied     bool      `json:"isReplied" example:"false"`
+	MinSalary     float64   `json:"minSalary,omitempty" example:"50000.00"`
+	MaxSalary     float64   `json:"maxSalary,omitempty" example:"70000.00"`
+	JobPostingURL string    `json:"jobPostingURL,omitempty" example:"https://glassbore.com/jobs/swe420692137"`
+	Notes         string    `json:"notes,omitempty" example:"Follow up in two weeks"`
+}
+
+func NewUpdateJobApplicationResBody(jobApplication db.UpdateJobApplicationRow) UpdateJobApplicationResBody {
+	return UpdateJobApplicationResBody{
+		ID:            jobApplication.ID.String(),
+		CompanyName:   jobApplication.CompanyName,
+		JobTitle:      jobApplication.JobTitle,
+		DateApplied:   jobApplication.DateApplied.Time.UTC(),
+		Status:        jobApplication.Status,
+		IsReplied:     jobApplication.IsReplied,
+		MinSalary:     jobApplication.MinSalary.Float64,
+		MaxSalary:     jobApplication.MaxSalary.Float64,
+		JobPostingURL: jobApplication.JobPostingUrl.String,
+		Notes:         jobApplication.Notes.String,
 	}
 }
