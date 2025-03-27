@@ -1144,3 +1144,325 @@ func TestCreateJobApplication(t *testing.T) {
 		assert.Contains(t, resBodyRaw.Error, "Status", "Field validation for 'Status' failed on the 'oneof' tag")
 	})
 }
+
+func TestUpdateJobApplication(t *testing.T) {
+	queries.Purge(ctx)
+
+	setUpUser(ctx)
+
+	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+	var (
+		companyName   = "Evil Corp Inc."
+		jobTitle      = "Software Engineer"
+		dateApplied   = time.Now().Add(time.Hour * -1)
+		status        = db.StatusINPROGRESS
+		isReplied     = false
+		minSalary     = 50_000.00
+		maxSalary     = 70_000.00
+		jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+		notes         = "Follow up in two weeks"
+	)
+
+	jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+		UserID:        user.ID,
+		CompanyName:   companyName,
+		JobTitle:      jobTitle,
+		DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+		Status:        status,
+		MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+		MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+		JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+		Notes:         pgtype.Text{String: notes, Valid: true},
+	})
+
+	t.Run("valid request - changing company name", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			CompanyName: "Google",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, "Google", resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing job title", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			JobTitle: "Angular Developer",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, "Angular Developer", resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing date applied", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		dateApplied := time.Date(2006, 02, 01, 0, 0, 0, 0, time.UTC)
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			DateApplied: dateApplied,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing status", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			Status: db.StatusREJECTED,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing is replied", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			IsReplied: true,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, true, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing min salary", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			MinSalary: 2137.00,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, 2137.00, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing max salary", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			MaxSalary: 42069.00,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, 42069.00, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing job posting URL", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			JobPostingURL: "https://glassbore.com/jobs/fe420692137",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, "https://glassbore.com/jobs/fe420692137", resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("valid request - changing notes", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			Notes: "Follow up in a week",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, db.StatusREJECTED, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, "Follow up in a week", resBodyRaw.Notes)
+	})
+}

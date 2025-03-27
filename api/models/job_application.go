@@ -160,3 +160,29 @@ func NewCreateJobApplicationResBody(jobApplication db.CreateJobApplicationRow) C
 		Notes:         jobApplication.Notes.String,
 	}
 }
+
+type UpdateJobApplicationReqBody struct {
+	CompanyName   string    `json:"companyName,omitempty" example:"Evil Corp Inc."`
+	JobTitle      string    `json:"jobTitle,omitempty" example:"Software Engineer"`
+	DateApplied   time.Time `json:"dateApplied,omitempty" example:"2025-03-14T12:34:56Z"`
+	Status        db.Status `json:"status,omitempty" binding:"oneof=IN_PROGRESS REJECTED ACCEPTED" example:"IN_PROGRESS"`
+	IsReplied     bool      `json:"isReplied,omitempty" example:"false"`
+	MinSalary     float64   `json:"minSalary,omitempty" example:"50000.00"`
+	MaxSalary     float64   `json:"maxSalary,omitempty" example:"70000.00"`
+	JobPostingURL string    `json:"jobPostingURL,omitempty" example:"https://glassbore.com/jobs/swe420692137"`
+	Notes         string    `json:"notes,omitempty" example:"Follow up in two weeks"`
+}
+
+func NewUpdateJobApplicationReqBody(companyName, jobTitle string, dateApplied time.Time, status db.Status, isReplied bool, minSalary, maxSalary float64, jobPostingURL, notes string) UpdateJobApplicationReqBody {
+	return UpdateJobApplicationReqBody{
+		CompanyName:   companyName,
+		JobTitle:      jobTitle,
+		DateApplied:   dateApplied,
+		Status:        status,
+		IsReplied:     isReplied,
+		MinSalary:     minSalary,
+		MaxSalary:     maxSalary,
+		JobPostingURL: jobPostingURL,
+		Notes:         notes,
+	}
+}
