@@ -246,12 +246,8 @@ func (h *Handler) UpdateJobApplication(c *gin.Context) {
 	params := db.UpdateJobApplicationParams{}
 
 	// TODO: Refactor
-	if body.CompanyName != nil {
-		params.CompanyName = pgtype.Text{String: *body.CompanyName, Valid: true}
-	}
-	if body.JobTitle != nil {
-		params.JobTitle = pgtype.Text{String: *body.JobTitle, Valid: true}
-	}
+	params.CompanyName = pgtype.Text{String: body.CompanyName, Valid: true}
+	params.JobTitle = pgtype.Text{String: body.JobTitle, Valid: true}
 	if body.DateApplied != nil {
 		params.DateApplied = pgtype.Timestamptz{Time: *body.DateApplied, Valid: true}
 	}
@@ -267,12 +263,8 @@ func (h *Handler) UpdateJobApplication(c *gin.Context) {
 	if body.MaxSalary != nil {
 		params.MaxSalary = pgtype.Float8{Float64: *body.MaxSalary, Valid: true}
 	}
-	if body.JobPostingURL != nil {
-		params.JobPostingUrl = pgtype.Text{String: *body.JobPostingURL, Valid: true}
-	}
-	if body.Notes != nil {
-		params.Notes = pgtype.Text{String: *body.Notes, Valid: true}
-	}
+	params.JobPostingUrl = pgtype.Text{String: body.JobPostingURL, Valid: true}
+	params.Notes = pgtype.Text{String: body.Notes, Valid: true}
 
 	jobApplication, err := h.queries.UpdateJobApplication(h.ctx, db.UpdateJobApplicationParams{
 		ID:            jobApplicationId,

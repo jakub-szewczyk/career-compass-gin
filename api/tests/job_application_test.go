@@ -1143,6 +1143,72 @@ func TestCreateJobApplication(t *testing.T) {
 		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
 		assert.Contains(t, resBodyRaw.Error, "Status", "Field validation for 'Status' failed on the 'oneof' tag")
 	})
+
+	t.Run("invalid payload - incorrect min salary", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		var (
+			companyName   = "Evil Corp Inc."
+			jobTitle      = "Software Engineer"
+			dateApplied   = time.Now().Add(time.Hour * -1)
+			status        = db.StatusINPROGRESS
+			minSalary     = -50_000.00
+			maxSalary     = 70_000.00
+			jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+			notes         = "Follow up in two weeks"
+		)
+
+		bodyRaw := models.NewCreateJobApplicationReqBody(companyName, jobTitle, dateApplied, status, minSalary, maxSalary, jobPostingURL, notes)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("POST", "/api/job-applications", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "MinSalary", "Field validation for 'MinSalary' failed on the 'oneof' tag")
+	})
+
+	t.Run("invalid payload - incorrect max salary", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		var (
+			companyName   = "Evil Corp Inc."
+			jobTitle      = "Software Engineer"
+			dateApplied   = time.Now().Add(time.Hour * -1)
+			status        = db.StatusINPROGRESS
+			minSalary     = 50_000.00
+			maxSalary     = -70_000.00
+			jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+			notes         = "Follow up in two weeks"
+		)
+
+		bodyRaw := models.NewCreateJobApplicationReqBody(companyName, jobTitle, dateApplied, status, minSalary, maxSalary, jobPostingURL, notes)
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("POST", "/api/job-applications", strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "MaxSalary", "Field validation for 'MaxSalary' failed on the 'oneof' tag")
+	})
 }
 
 func TestUpdateJobApplication(t *testing.T) {
@@ -1181,10 +1247,9 @@ func TestUpdateJobApplication(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		companyName := new(string)
-		*companyName = "Google"
+		companyName := "Google"
 
-		bodyRaw := models.NewUpdateJobApplicationReqBody(companyName, nil, nil, nil, nil, nil, nil, nil, nil)
+		bodyRaw := models.NewUpdateJobApplicationReqBody(companyName, "", nil, nil, nil, nil, nil, "", "")
 		bodyJSON, _ := json.Marshal(bodyRaw)
 
 		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
@@ -1200,7 +1265,7 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
-		assert.Equal(t, *companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
 		assert.Equal(t, status, resBodyRaw.Status)
@@ -1232,8 +1297,7 @@ func TestUpdateJobApplication(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		jobTitle := new(string)
-		*jobTitle = "Angular Developer"
+		jobTitle := "Angular Developer"
 
 		bodyRaw := models.UpdateJobApplicationReqBody{
 			JobTitle: jobTitle,
@@ -1254,7 +1318,7 @@ func TestUpdateJobApplication(t *testing.T) {
 
 		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
-		assert.Equal(t, *jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
 		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
 		assert.Equal(t, status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
@@ -1550,8 +1614,7 @@ func TestUpdateJobApplication(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		jobPostingURL := new(string)
-		*jobPostingURL = "https://glassbore.com/jobs/fe420692137"
+		jobPostingURL := "https://glassbore.com/jobs/fe420692137"
 
 		bodyRaw := models.UpdateJobApplicationReqBody{
 			JobPostingURL: jobPostingURL,
@@ -1578,7 +1641,7 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
-		assert.Equal(t, *jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
 		assert.Equal(t, notes, resBodyRaw.Notes)
 	})
 
@@ -1603,8 +1666,7 @@ func TestUpdateJobApplication(t *testing.T) {
 
 		w := httptest.NewRecorder()
 
-		notes := new(string)
-		*notes = "Follow up in a week"
+		notes := "Follow up in a week"
 
 		bodyRaw := models.UpdateJobApplicationReqBody{
 			Notes: notes,
@@ -1632,6 +1694,591 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
 		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
-		assert.Equal(t, *notes, resBodyRaw.Notes)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty company name", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			CompanyName: "",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty job title", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			JobTitle: "",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty date applied", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			DateApplied: nil,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty status", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			Status: nil,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty is replied", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			IsReplied: nil,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty min salary", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			MinSalary: nil,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty max salary", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			MaxSalary: nil,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty job posting url", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			JobPostingURL: "",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - empty notes", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			Notes: "",
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.JobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+	})
+
+	t.Run("invalid payload - incorrect status", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		incorrectStatus := new(db.Status)
+		*incorrectStatus = "UNKNOWN"
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			Status: incorrectStatus,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "Status", "Field validation for 'Status' failed on the 'oneof' tag")
+	})
+
+	t.Run("invalid payload - incorrect min salary", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		incorrectMinSalary := new(float64)
+		*incorrectMinSalary = -1.00
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			MinSalary: incorrectMinSalary,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "MinSalary", "Field validation for 'MinSalary' failed on the 'gte' tag")
+	})
+
+	t.Run("invalid payload - incorrect max salary", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		incorrectMaxSalary := new(float64)
+		*incorrectMaxSalary = -1.00
+
+		bodyRaw := models.UpdateJobApplicationReqBody{
+			MaxSalary: incorrectMaxSalary,
+		}
+		bodyJSON, _ := json.Marshal(bodyRaw)
+
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), strings.NewReader(string(bodyJSON)))
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.Error
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.Error, "missing error message")
+		assert.Contains(t, resBodyRaw.Error, "MaxSalary", "Field validation for 'MaxSalary' failed on the 'gte' tag")
 	})
 }

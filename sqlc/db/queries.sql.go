@@ -445,15 +445,15 @@ func (q *Queries) Purge(ctx context.Context) error {
 const updateJobApplication = `-- name: UpdateJobApplication :one
 UPDATE job_applications
 SET 
-  company_name = COALESCE($3, company_name),
-  job_title = COALESCE($4, job_title),
-  date_applied = COALESCE($5, date_applied),
-  status = COALESCE($6, status),
-  is_replied = COALESCE($7, is_replied),
-  min_salary = COALESCE($8, min_salary),
-  max_salary = COALESCE($9, max_salary),
-  job_posting_url = COALESCE($10, job_posting_url),
-  notes = COALESCE($11, notes)
+  company_name = coalesce(nullif($3, ''), company_name),
+  job_title = coalesce(nullif($4, ''), job_title),
+  date_applied = coalesce($5, date_applied),
+  status = coalesce($6, status),
+  is_replied = coalesce($7, is_replied),
+  min_salary = coalesce($8, min_salary),
+  max_salary = coalesce($9, max_salary),
+  job_posting_url = coalesce(nullif($10, ''), job_posting_url),
+  notes = coalesce(nullif($11, ''), notes)
 WHERE id = $1 AND user_id = $2
 RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes
 `
@@ -461,15 +461,15 @@ RETURNING id, company_name, job_title, date_applied, status, is_replied, min_sal
 type UpdateJobApplicationParams struct {
 	ID            pgtype.UUID        `json:"id"`
 	UserID        pgtype.UUID        `json:"userId"`
-	CompanyName   pgtype.Text        `json:"companyName"`
-	JobTitle      pgtype.Text        `json:"jobTitle"`
+	CompanyName   interface{}        `json:"companyName"`
+	JobTitle      interface{}        `json:"jobTitle"`
 	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
 	Status        NullStatus         `json:"status"`
 	IsReplied     pgtype.Bool        `json:"isReplied"`
 	MinSalary     pgtype.Float8      `json:"minSalary"`
 	MaxSalary     pgtype.Float8      `json:"maxSalary"`
-	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
-	Notes         pgtype.Text        `json:"notes"`
+	JobPostingUrl interface{}        `json:"jobPostingUrl"`
+	Notes         interface{}        `json:"notes"`
 }
 
 type UpdateJobApplicationRow struct {

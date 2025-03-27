@@ -110,14 +110,14 @@ RETURNING id, company_name, job_title, date_applied, status, is_replied, min_sal
 -- name: UpdateJobApplication :one
 UPDATE job_applications
 SET 
-  company_name = COALESCE(sqlc.narg('company_name'), company_name),
-  job_title = COALESCE(sqlc.narg('job_title'), job_title),
-  date_applied = COALESCE(sqlc.narg('date_applied'), date_applied),
-  status = COALESCE(sqlc.narg('status'), status),
-  is_replied = COALESCE(sqlc.narg('is_replied'), is_replied),
-  min_salary = COALESCE(sqlc.narg('min_salary'), min_salary),
-  max_salary = COALESCE(sqlc.narg('max_salary'), max_salary),
-  job_posting_url = COALESCE(sqlc.narg('job_posting_url'), job_posting_url),
-  notes = COALESCE(sqlc.narg('notes'), notes)
+  company_name = coalesce(nullif(sqlc.narg('company_name'), ''), company_name),
+  job_title = coalesce(nullif(sqlc.narg('job_title'), ''), job_title),
+  date_applied = coalesce(sqlc.narg('date_applied'), date_applied),
+  status = coalesce(sqlc.narg('status'), status),
+  is_replied = coalesce(sqlc.narg('is_replied'), is_replied),
+  min_salary = coalesce(sqlc.narg('min_salary'), min_salary),
+  max_salary = coalesce(sqlc.narg('max_salary'), max_salary),
+  job_posting_url = coalesce(nullif(sqlc.narg('job_posting_url'), ''), job_posting_url),
+  notes = coalesce(nullif(sqlc.narg('notes'), ''), notes)
 WHERE id = $1 AND user_id = $2
 RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes;
