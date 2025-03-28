@@ -214,7 +214,21 @@ func (h *Handler) CreateJobApplication(c *gin.Context) {
 	c.JSON(http.StatusCreated, resBody)
 }
 
-// TODO: Document
+// UpdateJobApplication godoc
+//
+//	@Summary		Update a job application
+//	@Description	Updates an existing job application with the provided details
+//
+//	@Security		BearerAuth
+//
+//	@Tags			Job application
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		models.UpdateJobApplicationReqBody	true	"Job application details"
+//	@Failure		400		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Success		200		{object}	models.UpdateJobApplicationResBody
+//	@Router			/job-applications/{jobApplicationId} [put]
 func (h *Handler) UpdateJobApplication(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 

@@ -239,6 +239,55 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing job application with the provided details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job application"
+                ],
+                "summary": "Update a job application",
+                "parameters": [
+                    {
+                        "description": "Job application details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateJobApplicationReqBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateJobApplicationResBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
             }
         },
         "/password/reset": {
@@ -603,10 +652,12 @@ const docTemplate = `{
                 },
                 "maxSalary": {
                     "type": "number",
+                    "minimum": 0,
                     "example": 70000
                 },
                 "minSalary": {
                     "type": "number",
+                    "minimum": 0,
                     "example": 50000
                 },
                 "notes": {
@@ -900,6 +951,107 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/models.ProfileResBody"
+                }
+            }
+        },
+        "models.UpdateJobApplicationReqBody": {
+            "type": "object",
+            "properties": {
+                "companyName": {
+                    "type": "string",
+                    "example": "Evil Corp Inc."
+                },
+                "dateApplied": {
+                    "type": "string",
+                    "example": "2025-03-14T12:34:56Z"
+                },
+                "isReplied": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "jobPostingURL": {
+                    "type": "string",
+                    "example": "https://glassbore.com/jobs/swe420692137"
+                },
+                "jobTitle": {
+                    "type": "string",
+                    "example": "Software Engineer"
+                },
+                "maxSalary": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 70000
+                },
+                "minSalary": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 50000
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Follow up in two weeks"
+                },
+                "status": {
+                    "enum": [
+                        "IN_PROGRESS",
+                        "REJECTED",
+                        "ACCEPTED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/db.Status"
+                        }
+                    ],
+                    "example": "IN_PROGRESS"
+                }
+            }
+        },
+        "models.UpdateJobApplicationResBody": {
+            "type": "object",
+            "properties": {
+                "companyName": {
+                    "type": "string",
+                    "example": "Evil Corp Inc."
+                },
+                "dateApplied": {
+                    "type": "string",
+                    "example": "2025-03-14T12:34:56Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "isReplied": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "jobPostingURL": {
+                    "type": "string",
+                    "example": "https://glassbore.com/jobs/swe420692137"
+                },
+                "jobTitle": {
+                    "type": "string",
+                    "example": "Software Engineer"
+                },
+                "maxSalary": {
+                    "type": "number",
+                    "example": 70000
+                },
+                "minSalary": {
+                    "type": "number",
+                    "example": 50000
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Follow up in two weeks"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/db.Status"
+                        }
+                    ],
+                    "example": "IN_PROGRESS"
                 }
             }
         },
