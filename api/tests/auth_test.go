@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
-	common "github.com/jakub-szewczyk/career-compass-gin/utils"
+	"github.com/jakub-szewczyk/career-compass-gin/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,7 +40,7 @@ func TestSignUp(t *testing.T) {
 	assert.Equal(t, false, resBodyRaw.User.IsEmailVerified)
 	assert.NotEmpty(t, resBodyRaw.Token, "missing token")
 
-	uuid, _ := common.ToUUID(resBodyRaw.User.ID)
+	uuid, _ := utils.ToUUID(resBodyRaw.User.ID)
 	user, err := queries.GetUserById(ctx, uuid)
 
 	assert.NoError(t, err, "error getting user from the database")

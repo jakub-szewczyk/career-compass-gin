@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 )
 
@@ -214,4 +215,33 @@ func NewUpdateJobApplicationResBody(jobApplication db.UpdateJobApplicationRow) U
 		JobPostingURL: jobApplication.JobPostingUrl.String,
 		Notes:         jobApplication.Notes.String,
 	}
+}
+
+func NewUpdateJobApplicationParams(jobApplicationId, userId pgtype.UUID, body UpdateJobApplicationReqBody) db.UpdateJobApplicationParams {
+	params := db.UpdateJobApplicationParams{
+		ID:            jobApplicationId,
+		UserID:        userId,
+		CompanyName:   pgtype.Text{String: body.CompanyName, Valid: true},
+		JobTitle:      pgtype.Text{String: body.JobTitle, Valid: true},
+		JobPostingUrl: pgtype.Text{String: body.JobPostingURL, Valid: true},
+		Notes:         pgtype.Text{String: body.Notes, Valid: true},
+	}
+
+	if body.DateApplied != nil {
+		params.DateApplied = pgtype.Timestamptz{Time: *body.DateApplied, Valid: true}
+	}
+	if body.Status != nil {
+		params.Status = db.NullStatus{Status: *body.Status, Valid: true}
+	}
+	if body.IsReplied != nil {
+		params.IsReplied = pgtype.Bool{Bool: *body.IsReplied, Valid: true}
+	}
+	if body.MinSalary != nil {
+		params.MinSalary = pgtype.Float8{Float64: *body.MinSalary, Valid: true}
+	}
+	if body.MaxSalary != nil {
+		params.MaxSalary = pgtype.Float8{Float64: *body.MaxSalary, Valid: true}
+	}
+
+	return params
 }

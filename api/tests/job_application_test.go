@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
-	common "github.com/jakub-szewczyk/career-compass-gin/utils"
+	"github.com/jakub-szewczyk/career-compass-gin/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -959,7 +959,7 @@ func TestCreateJobApplication(t *testing.T) {
 		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
 		assert.Equal(t, notes, resBodyRaw.Notes)
 
-		uuid, err := common.ToUUID(resBodyRaw.ID)
+		uuid, err := utils.ToUUID(resBodyRaw.ID)
 
 		jobApplication, err := queries.GetJobApplication(ctx, db.GetJobApplicationParams{
 			ID:     uuid,

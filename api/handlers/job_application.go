@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
-	common "github.com/jakub-szewczyk/career-compass-gin/utils"
+	"github.com/jakub-szewczyk/career-compass-gin/utils"
 )
 
 // JobApplications godoc
@@ -34,7 +34,7 @@ import (
 func (h *Handler) JobApplications(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	uuid, err := common.ToUUID(userId)
+	uuid, err := utils.ToUUID(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -90,7 +90,7 @@ func (h *Handler) JobApplications(c *gin.Context) {
 		IsRepliedDesc:   queryParams.Sort == models.IsRepliedDesc,
 
 		CompanyNameOrJobTitle: queryParams.CompanyNameOrJobTitle,
-		DateApplied:           common.NullifyTime(dateApplied),
+		DateApplied:           utils.NullifyTime(dateApplied),
 		Status:                queryParams.Status,
 	})
 	if err != nil {
@@ -124,7 +124,7 @@ func (h *Handler) JobApplications(c *gin.Context) {
 func (h *Handler) JobApplication(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	uuid, err := common.ToUUID(userId)
+	uuid, err := utils.ToUUID(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -132,7 +132,7 @@ func (h *Handler) JobApplication(c *gin.Context) {
 		return
 	}
 
-	jobApplicationId, err := common.ToUUID(c.Param("jobApplicationId"))
+	jobApplicationId, err := utils.ToUUID(c.Param("jobApplicationId"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -174,7 +174,7 @@ func (h *Handler) JobApplication(c *gin.Context) {
 func (h *Handler) CreateJobApplication(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	uuid, err := common.ToUUID(userId)
+	uuid, err := utils.ToUUID(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -232,7 +232,7 @@ func (h *Handler) CreateJobApplication(c *gin.Context) {
 func (h *Handler) UpdateJobApplication(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	uuid, err := common.ToUUID(userId)
+	uuid, err := utils.ToUUID(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -240,7 +240,7 @@ func (h *Handler) UpdateJobApplication(c *gin.Context) {
 		return
 	}
 
-	jobApplicationId, err := common.ToUUID(c.Param("jobApplicationId"))
+	jobApplicationId, err := utils.ToUUID(c.Param("jobApplicationId"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -257,42 +257,9 @@ func (h *Handler) UpdateJobApplication(c *gin.Context) {
 		return
 	}
 
-	params := db.UpdateJobApplicationParams{}
+	params := models.NewUpdateJobApplicationParams(jobApplicationId, uuid, body)
 
-	// TODO: Refactor
-	params.CompanyName = pgtype.Text{String: body.CompanyName, Valid: true}
-	params.JobTitle = pgtype.Text{String: body.JobTitle, Valid: true}
-	if body.DateApplied != nil {
-		params.DateApplied = pgtype.Timestamptz{Time: *body.DateApplied, Valid: true}
-	}
-	if body.Status != nil {
-		params.Status = db.NullStatus{Status: *body.Status, Valid: true}
-	}
-	if body.IsReplied != nil {
-		params.IsReplied = pgtype.Bool{Bool: *body.IsReplied, Valid: true}
-	}
-	if body.MinSalary != nil {
-		params.MinSalary = pgtype.Float8{Float64: *body.MinSalary, Valid: true}
-	}
-	if body.MaxSalary != nil {
-		params.MaxSalary = pgtype.Float8{Float64: *body.MaxSalary, Valid: true}
-	}
-	params.JobPostingUrl = pgtype.Text{String: body.JobPostingURL, Valid: true}
-	params.Notes = pgtype.Text{String: body.Notes, Valid: true}
-
-	jobApplication, err := h.queries.UpdateJobApplication(h.ctx, db.UpdateJobApplicationParams{
-		ID:            jobApplicationId,
-		UserID:        uuid,
-		CompanyName:   params.CompanyName,
-		JobTitle:      params.JobTitle,
-		DateApplied:   params.DateApplied,
-		Status:        params.Status,
-		IsReplied:     params.IsReplied,
-		MinSalary:     params.MinSalary,
-		MaxSalary:     params.MaxSalary,
-		JobPostingUrl: params.JobPostingUrl,
-		Notes:         params.Notes,
-	})
+	jobApplication, err := h.queries.UpdateJobApplication(h.ctx, params)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
-	common "github.com/jakub-szewczyk/career-compass-gin/utils"
+	"github.com/jakub-szewczyk/career-compass-gin/utils"
 )
 
 // Profile godoc
@@ -31,7 +31,7 @@ import (
 func (h *Handler) Profile(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	uuid, err := common.ToUUID(userId)
+	uuid, err := utils.ToUUID(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -76,7 +76,7 @@ func (h *Handler) Profile(c *gin.Context) {
 func (h *Handler) SendVerificationEmail(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	uuid, err := common.ToUUID(userId)
+	uuid, err := utils.ToUUID(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -163,7 +163,7 @@ func (h *Handler) SendVerificationEmail(c *gin.Context) {
 func (h *Handler) VerifyEmail(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
-	uuid, err := common.ToUUID(userId)
+	uuid, err := utils.ToUUID(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
