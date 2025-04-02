@@ -83,6 +83,40 @@ definitions:
         - $ref: '#/definitions/db.Status'
         example: IN_PROGRESS
     type: object
+  models.DeleteJobApplicationResBody:
+    properties:
+      companyName:
+        example: Evil Corp Inc.
+        type: string
+      dateApplied:
+        example: "2025-03-14T12:34:56Z"
+        type: string
+      id:
+        example: f4d15edc-e780-42b5-957d-c4352401d9ca
+        type: string
+      isReplied:
+        example: false
+        type: boolean
+      jobPostingURL:
+        example: https://glassbore.com/jobs/swe420692137
+        type: string
+      jobTitle:
+        example: Software Engineer
+        type: string
+      maxSalary:
+        example: 70000
+        type: number
+      minSalary:
+        example: 50000
+        type: number
+      notes:
+        example: Follow up in two weeks
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/db.Status'
+        example: IN_PROGRESS
+    type: object
   models.Error:
     properties:
       error:
@@ -475,6 +509,36 @@ paths:
       tags:
       - Job application
   /job-applications/{jobApplicationId}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing job application
+      parameters:
+      - description: Job application uuid
+        in: path
+        name: jobApplicationId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeleteJobApplicationResBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Delete a job application
+      tags:
+      - Job application
     get:
       consumes:
       - application/json
@@ -514,6 +578,11 @@ paths:
       - application/json
       description: Updates an existing job application with the provided details
       parameters:
+      - description: Job application uuid
+        in: path
+        name: jobApplicationId
+        required: true
+        type: string
       - description: Job application details
         in: body
         name: body

@@ -144,6 +144,47 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const deleteJobApplication = `-- name: DeleteJobApplication :one
+DELETE FROM job_applications WHERE id = $1 AND user_id = $2
+RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes
+`
+
+type DeleteJobApplicationParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID pgtype.UUID `json:"userId"`
+}
+
+type DeleteJobApplicationRow struct {
+	ID            pgtype.UUID        `json:"id"`
+	CompanyName   string             `json:"companyName"`
+	JobTitle      string             `json:"jobTitle"`
+	DateApplied   pgtype.Timestamptz `json:"dateApplied"`
+	Status        Status             `json:"status"`
+	IsReplied     bool               `json:"isReplied"`
+	MinSalary     pgtype.Float8      `json:"minSalary"`
+	MaxSalary     pgtype.Float8      `json:"maxSalary"`
+	JobPostingUrl pgtype.Text        `json:"jobPostingUrl"`
+	Notes         pgtype.Text        `json:"notes"`
+}
+
+func (q *Queries) DeleteJobApplication(ctx context.Context, arg DeleteJobApplicationParams) (DeleteJobApplicationRow, error) {
+	row := q.db.QueryRow(ctx, deleteJobApplication, arg.ID, arg.UserID)
+	var i DeleteJobApplicationRow
+	err := row.Scan(
+		&i.ID,
+		&i.CompanyName,
+		&i.JobTitle,
+		&i.DateApplied,
+		&i.Status,
+		&i.IsReplied,
+		&i.MinSalary,
+		&i.MaxSalary,
+		&i.JobPostingUrl,
+		&i.Notes,
+	)
+	return i, err
+}
+
 const deletePasswordResetToken = `-- name: DeletePasswordResetToken :exec
 DELETE FROM password_reset_tokens WHERE token = $1
 `

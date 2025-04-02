@@ -2282,3 +2282,67 @@ func TestUpdateJobApplication(t *testing.T) {
 		assert.Contains(t, resBodyRaw.Error, "MaxSalary", "Field validation for 'MaxSalary' failed on the 'gte' tag")
 	})
 }
+
+func TestDeleteJobApplication(t *testing.T) {
+	queries.Purge(ctx)
+
+	var (
+		companyName   = "Evil Corp Inc."
+		jobTitle      = "Software Engineer"
+		dateApplied   = time.Now().Add(time.Hour * -1)
+		status        = db.StatusINPROGRESS
+		isReplied     = false
+		minSalary     = 50_000.00
+		maxSalary     = 70_000.00
+		jobPostingURL = "https://glassbore.com/jobs/swe420692137"
+		notes         = "Follow up in two weeks"
+	)
+
+	t.Run("valid request - deleting job application", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		jobApplication, _ := queries.CreateJobApplication(ctx, db.CreateJobApplicationParams{
+			UserID:        user.ID,
+			CompanyName:   companyName,
+			JobTitle:      jobTitle,
+			DateApplied:   pgtype.Timestamptz{Time: dateApplied, Valid: true},
+			Status:        status,
+			MinSalary:     pgtype.Float8{Float64: minSalary, Valid: true},
+			MaxSalary:     pgtype.Float8{Float64: maxSalary, Valid: true},
+			JobPostingUrl: pgtype.Text{String: jobPostingURL, Valid: true},
+			Notes:         pgtype.Text{String: notes, Valid: true},
+		})
+
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("DELETE", fmt.Sprintf("/api/job-applications/%v", jobApplication.ID), nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.DeleteJobApplicationResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
+		assert.Equal(t, companyName, resBodyRaw.CompanyName)
+		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
+		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, status, resBodyRaw.Status)
+		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
+		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
+		assert.Equal(t, maxSalary, resBodyRaw.MaxSalary)
+		assert.Equal(t, jobPostingURL, resBodyRaw.JobPostingURL)
+		assert.Equal(t, notes, resBodyRaw.Notes)
+
+		jobApplications, err := queries.GetJobApplications(ctx, db.GetJobApplicationsParams{})
+		assert.Len(t, jobApplications, 0)
+	})
+}

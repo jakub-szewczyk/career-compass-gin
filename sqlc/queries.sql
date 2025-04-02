@@ -121,3 +121,7 @@ SET
   notes = coalesce(nullif(sqlc.narg('notes'), ''), notes)
 WHERE id = $1 AND user_id = $2
 RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes;
+
+-- name: DeleteJobApplication :one
+DELETE FROM job_applications WHERE id = $1 AND user_id = $2
+RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes;

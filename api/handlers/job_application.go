@@ -224,10 +224,11 @@ func (h *Handler) CreateJobApplication(c *gin.Context) {
 //	@Tags			Job application
 //	@Accept			json
 //	@Produce		json
-//	@Param			body	body		models.UpdateJobApplicationReqBody	true	"Job application details"
-//	@Failure		400		{object}	models.Error
-//	@Failure		500		{object}	models.Error
-//	@Success		200		{object}	models.UpdateJobApplicationResBody
+//	@Param			jobApplicationId	path		string								true	"Job application uuid"
+//	@Param			body				body		models.UpdateJobApplicationReqBody	true	"Job application details"
+//	@Failure		400					{object}	models.Error
+//	@Failure		500					{object}	models.Error
+//	@Success		200					{object}	models.UpdateJobApplicationResBody
 //	@Router			/job-applications/{jobApplicationId} [put]
 func (h *Handler) UpdateJobApplication(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
@@ -272,5 +273,52 @@ func (h *Handler) UpdateJobApplication(c *gin.Context) {
 	c.JSON(http.StatusOK, resBody)
 }
 
-// TODO: Implement
-func (h *Handler) DeleteJobApplication(c *gin.Context) {}
+// DeleteJobApplication godoc
+//
+//	@Summary		Delete a job application
+//	@Description	Deletes an existing job application
+//
+//	@Security		BearerAuth
+//
+//	@Tags			Job application
+//	@Accept			json
+//	@Produce		json
+//	@Param			jobApplicationId	path		string	true	"Job application uuid"
+//	@Failure		400					{object}	models.Error
+//	@Failure		500					{object}	models.Error
+//	@Success		200					{object}	models.DeleteJobApplicationResBody
+//	@Router			/job-applications/{jobApplicationId} [delete]
+func (h *Handler) DeleteJobApplication(c *gin.Context) {
+	userId := c.MustGet("userId").(string)
+
+	uuid, err := utils.ToUUID(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jobApplicationId, err := utils.ToUUID(c.Param("jobApplicationId"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jobApplication, err := h.queries.DeleteJobApplication(h.ctx, db.DeleteJobApplicationParams{
+		ID:     jobApplicationId,
+		UserID: uuid,
+	})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	resBody := models.NewDeleteJobApplicationResBody(jobApplication)
+
+	c.JSON(http.StatusOK, resBody)
+}
