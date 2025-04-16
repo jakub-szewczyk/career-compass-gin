@@ -142,7 +142,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 	user, err := h.queries.GetUserOnSignIn(h.ctx, body.Email)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "invalid credentials",
+			"error": "invalid credentials provided",
 		})
 		return
 	}
@@ -150,7 +150,7 @@ func (h *Handler) SignIn(c *gin.Context) {
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "invalid credentials",
+			"error": "invalid credentials provided",
 		})
 		return
 	}

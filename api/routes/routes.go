@@ -2,7 +2,9 @@ package routes
 
 import (
 	"context"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jakub-szewczyk/career-compass-gin/api/handlers"
 	"github.com/jakub-szewczyk/career-compass-gin/docs"
@@ -23,6 +25,15 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 	docs.SwaggerInfo.Host = "localhost:" + env.Port
 
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{env.FrontendURL},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	h := handlers.NewHandler(ctx, env, queries)
 
