@@ -11,6 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 	"golang.org/x/crypto/bcrypt"
@@ -53,10 +55,16 @@ func (h *Handler) SignUp(c *gin.Context) {
 		Password:  string(hash),
 	})
 
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+	if pgErr, ok := err.(*pgconn.PgError); err != nil && ok {
+		if pgErr.Code == pgerrcode.UniqueViolation && pgErr.ConstraintName == "unique_email" {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "an account with this email already exists",
+			})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		}
 		return
 	}
 
