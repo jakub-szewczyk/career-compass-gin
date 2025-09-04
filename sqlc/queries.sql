@@ -125,3 +125,14 @@ RETURNING id, company_name, job_title, date_applied, status, is_replied, min_sal
 -- name: DeleteJobApplication :one
 DELETE FROM job_applications WHERE id = $1 AND user_id = $2
 RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes;
+
+-- name: CreateResume :one
+INSERT INTO resumes (user_id, title)
+VALUES (
+  sqlc.arg(user_id),
+  COALESCE(
+    NULLIF(sqlc.arg(title), ''),
+    (SELECT 'Untitled ' || (COUNT(*) + 1)::text FROM resumes WHERE user_id = sqlc.arg(user_id))
+  )
+)
+RETURNING id, title;

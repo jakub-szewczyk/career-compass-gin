@@ -79,6 +79,14 @@ type PasswordResetToken struct {
 	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
 }
 
+type Resume struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"userId"`
+	Title     string             `json:"title"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
+}
+
 type User struct {
 	Email           string             `json:"email"`
 	Password        string             `json:"password"`
