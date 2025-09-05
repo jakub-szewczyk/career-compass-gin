@@ -1,8 +1,13 @@
 
 image: golang:1.23
 
+services:
+  - docker:26.1-dind
+
 variables:
   GO_MOD_CACHE_DIR: "$CI_PROJECT_DIR/.go/mod"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
 
 stages:
   - test
@@ -18,7 +23,15 @@ include:
   - template: Security/Dependency-Scanning.gitlab-ci.yml
 
 test:
+  image: docker:26.1-cli
   stage: test
+  before_script:
+    - apk add --update go
+    - |
+      until docker info; do
+        echo "Waiting for Docker to start..."
+        sleep 1
+      done
   script:
     - go install github.com/jstemmer/go-junit-report/v2@latest
     - go test -v ./api/tests | go-junit-report -set-exit-code > report.xml
