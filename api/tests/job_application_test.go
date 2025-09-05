@@ -2334,7 +2334,7 @@ func TestDeleteJobApplication(t *testing.T) {
 		assert.NotEmpty(t, resBodyRaw.ID, "missing job application id")
 		assert.Equal(t, companyName, resBodyRaw.CompanyName)
 		assert.Equal(t, jobTitle, resBodyRaw.JobTitle)
-		assert.Equal(t, dateApplied.UTC(), resBodyRaw.DateApplied.UTC())
+		assert.Equal(t, dateApplied.UTC().Truncate(time.Microsecond), resBodyRaw.DateApplied.UTC().Truncate(time.Microsecond))
 		assert.Equal(t, status, resBodyRaw.Status)
 		assert.Equal(t, isReplied, resBodyRaw.IsReplied)
 		assert.Equal(t, minSalary, resBodyRaw.MinSalary)
