@@ -136,3 +136,6 @@ VALUES (
   )
 )
 RETURNING id, title;
+
+-- name: DeleteResume :one
+DELETE FROM resumes WHERE id = $1 AND user_id = $2 RETURNING id, title;

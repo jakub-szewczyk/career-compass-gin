@@ -329,12 +329,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.DeleteJobApplicationResBody"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.Error"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -586,7 +580,7 @@ const docTemplate = `{
                 "summary": "Generate a new resume",
                 "parameters": [
                     {
-                        "description": "Resume data",
+                        "description": "Resume details",
                         "name": "body",
                         "in": "body",
                         "schema": {
@@ -605,6 +599,49 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/resumes/{resumeId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing resume",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Delete a resume",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resume uuid",
+                        "name": "resumeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeleteResumeResBody"
                         }
                     },
                     "500": {
@@ -900,6 +937,19 @@ const docTemplate = `{
                         }
                     ],
                     "example": "IN_PROGRESS"
+                }
+            }
+        },
+        "models.DeleteResumeResBody": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
                 }
             }
         },

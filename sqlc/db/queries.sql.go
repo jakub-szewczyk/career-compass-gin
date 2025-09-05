@@ -223,6 +223,27 @@ func (q *Queries) DeletePasswordResetToken(ctx context.Context, token string) er
 	return err
 }
 
+const deleteResume = `-- name: DeleteResume :one
+DELETE FROM resumes WHERE id = $1 AND user_id = $2 RETURNING id, title
+`
+
+type DeleteResumeParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID pgtype.UUID `json:"userId"`
+}
+
+type DeleteResumeRow struct {
+	ID    pgtype.UUID `json:"id"`
+	Title string      `json:"title"`
+}
+
+func (q *Queries) DeleteResume(ctx context.Context, arg DeleteResumeParams) (DeleteResumeRow, error) {
+	row := q.db.QueryRow(ctx, deleteResume, arg.ID, arg.UserID)
+	var i DeleteResumeRow
+	err := row.Scan(&i.ID, &i.Title)
+	return i, err
+}
+
 const expireVerificationToken = `-- name: ExpireVerificationToken :exec
 UPDATE verification_tokens SET expires_at = NOW() - INTERVAL '1 day' WHERE user_id = $1
 `

@@ -132,6 +132,15 @@ definitions:
         - $ref: '#/definitions/db.Status'
         example: IN_PROGRESS
     type: object
+  models.DeleteResumeResBody:
+    properties:
+      id:
+        example: f4d15edc-e780-42b5-957d-c4352401d9ca
+        type: string
+      title:
+        example: Evil Corp Inc. personalized
+        type: string
+    type: object
   models.Error:
     properties:
       error:
@@ -541,10 +550,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.DeleteJobApplicationResBody'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Error'
         "500":
           description: Internal Server Error
           schema:
@@ -779,7 +784,7 @@ paths:
       description: Generates a new resume. If no title is provided, a default one
         will be used.
       parameters:
-      - description: Resume data
+      - description: Resume details
         in: body
         name: body
         schema:
@@ -802,6 +807,33 @@ paths:
       security:
       - BearerAuth: []
       summary: Generate a new resume
+      tags:
+      - Resume
+  /resumes/{resumeId}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing resume
+      parameters:
+      - description: Resume uuid
+        in: path
+        name: resumeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeleteResumeResBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Delete a resume
       tags:
       - Resume
   /sign-in:

@@ -20,3 +20,12 @@ type CreateResumeResBody struct {
 func NewCreateResumeResBody(resume db.CreateResumeRow) CreateResumeResBody {
 	return CreateResumeResBody{ID: resume.ID.String(), Title: resume.Title}
 }
+
+type DeleteResumeResBody struct {
+	ID    string `json:"id" example:"f4d15edc-e780-42b5-957d-c4352401d9ca"`
+	Title string `json:"title,omitempty" example:"Evil Corp Inc. personalized"`
+}
+
+func NewDeleteResumeResBody(resume db.DeleteResumeRow) DeleteResumeResBody {
+	return DeleteResumeResBody{ID: resume.ID.String(), Title: resume.Title}
+}

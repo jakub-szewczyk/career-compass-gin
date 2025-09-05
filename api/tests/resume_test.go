@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jakub-szewczyk/career-compass-gin/api/models"
+	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -163,5 +164,74 @@ func TestCreateResume(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
+
+func TestDeleteResume(t *testing.T) {
+	const title = "Evil Corp Inc. personalized"
+
+	t.Run("valid request - delete resume", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		resume, err := queries.CreateResume(ctx, db.CreateResumeParams{UserID: user.ID, Title: title})
+
+		assert.NoError(t, err, "error creating resume")
+
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("DELETE", "/api/resumes/"+resume.ID.String(), nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.DeleteResumeResBody
+		err = json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.NotEmpty(t, resBodyRaw.ID, "missing resume id")
+		assert.Equal(t, title, resBodyRaw.Title)
+
+		// TODO: Uncomment once `queries.GetResumes` is implemented
+		// resumes, err := queries.GetResumes(ctx, db.GetResumesParams{})
+		// assert.Len(t, resumes, 0)
+	})
+
+	t.Run("invalid request - unauthorized", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+		resume, err := queries.CreateResume(ctx, db.CreateResumeParams{UserID: user.ID, Title: title})
+
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("DELETE", "/api/resumes/"+resume.ID.String(), nil)
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("invalid request - non-existent resume", func(t *testing.T) {
+		queries.Purge(ctx)
+
+		setUpUser(ctx)
+
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("DELETE", "/api/resumes/3912beb6-cb36-4190-a543-8ab4a3f29d4d", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }
