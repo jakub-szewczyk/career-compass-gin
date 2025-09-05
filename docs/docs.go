@@ -566,6 +566,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/resumes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generates a new resume. If no title is provided, a default one will be used.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Generate a new resume",
+                "parameters": [
+                    {
+                        "description": "Resume data",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateResumeReqBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateResumeResBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/sign-in": {
             "post": {
                 "description": "Authenticates a user and returns a JWT token for session management. Valid credentials are required to access the system.",
@@ -779,6 +829,28 @@ const docTemplate = `{
                         }
                     ],
                     "example": "IN_PROGRESS"
+                }
+            }
+        },
+        "models.CreateResumeReqBody": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
+                }
+            }
+        },
+        "models.CreateResumeResBody": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
                 }
             }
         },

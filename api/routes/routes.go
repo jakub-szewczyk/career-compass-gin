@@ -64,5 +64,11 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 	api.PUT("/job-applications/:jobApplicationId", h.UpdateJobApplication)
 	api.DELETE("/job-applications/:jobApplicationId", h.DeleteJobApplication)
 
+	api.GET("/resumes", h.Resumes)
+	api.GET("/resumes/:resumeId", h.Resume)
+	api.POST("/resumes", h.CreateResume)
+	api.PUT("/resumes/:resumeId", h.UpdateResume)
+	api.DELETE("/resumes/:resumeId", h.DeleteResume)
+
 	return r
 }

@@ -85,6 +85,35 @@ func (q *Queries) CreatePasswordResetToken(ctx context.Context, userID pgtype.UU
 	return token, err
 }
 
+const createResume = `-- name: CreateResume :one
+INSERT INTO resumes (user_id, title)
+VALUES (
+  $1,
+  COALESCE(
+    NULLIF($2, ''),
+    (SELECT 'Untitled ' || (COUNT(*) + 1)::text FROM resumes WHERE user_id = $1)
+  )
+)
+RETURNING id, title
+`
+
+type CreateResumeParams struct {
+	UserID pgtype.UUID `json:"userId"`
+	Title  interface{} `json:"title"`
+}
+
+type CreateResumeRow struct {
+	ID    pgtype.UUID `json:"id"`
+	Title string      `json:"title"`
+}
+
+func (q *Queries) CreateResume(ctx context.Context, arg CreateResumeParams) (CreateResumeRow, error) {
+	row := q.db.QueryRow(ctx, createResume, arg.UserID, arg.Title)
+	var i CreateResumeRow
+	err := row.Scan(&i.ID, &i.Title)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 WITH new_user AS (
   INSERT INTO users (first_name, last_name, email, password)
@@ -475,7 +504,7 @@ func (q *Queries) GetVerificationToken(ctx context.Context, userID pgtype.UUID) 
 }
 
 const purge = `-- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications, resumes
 `
 
 func (q *Queries) Purge(ctx context.Context) error {
