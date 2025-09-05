@@ -1,0 +1,28 @@
+
+image: golang:1.22
+
+variables:
+  GO_MOD_CACHE_DIR: "$CI_PROJECT_DIR/.go/mod"
+
+stages:
+  - test
+  - security
+
+cache:
+  paths:
+    - "$GO_MOD_CACHE_DIR"
+
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+
+test:
+  stage: test
+  script:
+    - go install github.com/jstemmer/go-junit-report/v2@latest
+    - go test -v ./api/tests | go-junit-report -set-exit-code > report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
