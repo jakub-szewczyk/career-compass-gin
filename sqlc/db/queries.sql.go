@@ -504,7 +504,7 @@ func (q *Queries) GetVerificationToken(ctx context.Context, userID pgtype.UUID) 
 }
 
 const purge = `-- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications, resumes
 `
 
 func (q *Queries) Purge(ctx context.Context) error {

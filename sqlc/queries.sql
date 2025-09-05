@@ -1,5 +1,5 @@
 -- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications;
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications, resumes;
 
 -- name: CreateUser :one
 WITH new_user AS (
