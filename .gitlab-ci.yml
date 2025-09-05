@@ -1,5 +1,5 @@
 
-image: golang:1.22
+image: golang:1.23
 
 variables:
   GO_MOD_CACHE_DIR: "$CI_PROJECT_DIR/.go/mod"
