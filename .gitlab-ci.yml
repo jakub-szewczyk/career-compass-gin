@@ -1,0 +1,45 @@
+
+image: golang:1.23
+
+services:
+  - docker:26.1-dind
+
+variables:
+  GO_MOD_CACHE_DIR: "$CI_PROJECT_DIR/.go/mod"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+stages:
+  - test
+  - security
+
+cache:
+  paths:
+    - "$GO_MOD_CACHE_DIR"
+
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+
+test:
+  image: docker:26.1-cli
+  stage: test
+  before_script:
+    - apk add --update curl
+    - curl -L -o go.tar.gz https://go.dev/dl/go1.23.1.linux-amd64.tar.gz
+    - tar -C /usr/local -xzf go.tar.gz
+    - export PATH=$PATH:/usr/local/go/bin
+    - |
+      until docker info; do
+        echo "Waiting for Docker to start..."
+        sleep 1
+      done
+  script:
+    - export GOBIN=/go/bin
+    - go install github.com/jstemmer/go-junit-report/v2@latest
+    - go test -v ./api/tests | /go/bin/go-junit-report -set-exit-code > report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
