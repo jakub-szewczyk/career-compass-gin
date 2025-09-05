@@ -36,6 +36,7 @@ test:
         sleep 1
       done
   script:
+    - export GOBIN=/go/bin
     - go install github.com/jstemmer/go-junit-report/v2@latest
     - go test -v ./api/tests | /go/bin/go-junit-report -set-exit-code > report.xml
   artifacts:
