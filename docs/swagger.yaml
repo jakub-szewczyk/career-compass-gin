@@ -83,6 +83,21 @@ definitions:
         - $ref: '#/definitions/db.Status'
         example: IN_PROGRESS
     type: object
+  models.CreateResumeReqBody:
+    properties:
+      title:
+        example: Evil Corp Inc. personalized
+        type: string
+    type: object
+  models.CreateResumeResBody:
+    properties:
+      id:
+        example: f4d15edc-e780-42b5-957d-c4352401d9ca
+        type: string
+      title:
+        example: Evil Corp Inc. personalized
+        type: string
+    type: object
   models.DeleteJobApplicationResBody:
     properties:
       companyName:
@@ -757,6 +772,38 @@ paths:
       summary: Verify user email
       tags:
       - Profile
+  /resumes:
+    post:
+      consumes:
+      - application/json
+      description: Generates a new resume. If no title is provided, a default one
+        will be used.
+      parameters:
+      - description: Resume data
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/models.CreateResumeReqBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.CreateResumeResBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Generate a new resume
+      tags:
+      - Resume
   /sign-in:
     post:
       consumes:

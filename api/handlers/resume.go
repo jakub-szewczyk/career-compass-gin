@@ -13,6 +13,19 @@ func (h *Handler) Resumes(c *gin.Context) {}
 
 func (h *Handler) Resume(c *gin.Context) {}
 
+// CreateResume godoc
+//
+// @Summary		Generate a new resume
+// @Description	Generates a new resume. If no title is provided, a default one will be used.
+// @Tags			Resume
+// @Accept			json
+// @Produce		json
+// @Param			body	body		models.CreateResumeReqBody	false	"Resume data"
+// @Success		201		{object}	models.CreateResumeResBody
+// @Failure		400		{object}	models.Error
+// @Failure		500		{object}	models.Error
+// @Router			/resumes [post]
+// @Security		BearerAuth
 func (h *Handler) CreateResume(c *gin.Context) {
 	userId := c.MustGet("userId").(string)
 
