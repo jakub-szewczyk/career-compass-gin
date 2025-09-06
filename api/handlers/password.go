@@ -133,7 +133,18 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.queries.UpdatePassword(h.ctx, db.UpdatePasswordParams{
+	tx, err := h.pool.Begin(h.ctx)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	defer tx.Rollback(h.ctx)
+
+	qtx := h.queries.WithTx(tx)
+
+	if err := qtx.UpdatePassword(h.ctx, db.UpdatePasswordParams{
 		ID:       token.UserID,
 		Password: string(hash),
 	}); err != nil {
@@ -143,7 +154,14 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.queries.DeletePasswordResetToken(h.ctx, token.Token); err != nil {
+	if err := qtx.DeletePasswordResetToken(h.ctx, token.Token); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := tx.Commit(h.ctx); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

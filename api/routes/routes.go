@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jakub-szewczyk/career-compass-gin/api/handlers"
 	"github.com/jakub-szewczyk/career-compass-gin/docs"
 	_ "github.com/jakub-szewczyk/career-compass-gin/docs"
@@ -19,7 +20,7 @@ import (
 // @securityDefinitions.apikey	BearerAuth
 // @in							header
 // @name						Authorization
-func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engine {
+func Setup(ctx context.Context, env handlers.Env, queries *db.Queries, pool *pgxpool.Pool) *gin.Engine {
 	// TODO: Read from env vars
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Host = "localhost:" + env.Port
@@ -35,7 +36,7 @@ func Setup(ctx context.Context, env handlers.Env, queries *db.Queries) *gin.Engi
 		MaxAge:           12 * time.Hour,
 	}))
 
-	h := handlers.NewHandler(ctx, env, queries)
+	h := handlers.NewHandler(ctx, env, queries, pool)
 
 	api := r.Group("/api")
 

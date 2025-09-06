@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jakub-szewczyk/career-compass-gin/api/handlers"
 	"github.com/jakub-szewczyk/career-compass-gin/api/routes"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
@@ -86,15 +86,15 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to obtain container connection string: %s", err)
 	}
 
-	conn, err := pgx.Connect(ctx, databaseURL)
+	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %s", err)
 	}
-	defer conn.Close(ctx)
+	defer pool.Close()
 
-	queries = db.New(conn)
+	queries = db.New(pool)
 
-	r = routes.Setup(ctx, handlers.NewEnv(port.Port(), databaseURL, "testing", "", "", "", "", "", "http://localhost:5173", "", ""), queries)
+	r = routes.Setup(ctx, handlers.NewEnv(port.Port(), databaseURL, "testing", "", "", "", "", "", "http://localhost:5173", "", ""), queries, pool)
 
 	code := m.Run()
 

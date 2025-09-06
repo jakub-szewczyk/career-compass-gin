@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jakub-szewczyk/career-compass-gin/sqlc/db"
 )
 
@@ -44,12 +45,14 @@ type Handler struct {
 	ctx     context.Context
 	env     Env
 	queries *db.Queries
+	pool    *pgxpool.Pool
 }
 
-func NewHandler(ctx context.Context, env Env, queries *db.Queries) *Handler {
+func NewHandler(ctx context.Context, env Env, queries *db.Queries, pool *pgxpool.Pool) *Handler {
 	return &Handler{
 		ctx:     ctx,
 		env:     env,
 		queries: queries,
+		pool:    pool,
 	}
 }
