@@ -9,7 +9,78 @@ import (
 	"github.com/jakub-szewczyk/career-compass-gin/utils"
 )
 
-func (h *Handler) Resumes(c *gin.Context) {}
+// Resumes godoc
+//
+//	@Summary		Get resumes
+//	@Description	Retrieves a list of resumes with support for sorting, filtering, and pagination
+//
+//	@Security		BearerAuth
+//
+//	@Tags			Resume
+//	@Accept			json
+//	@Produce		json
+//	@Param			page	query		int		false	"Page number (zero-indexed)"	minimum(0)																default(0)
+//	@Param			size	query		int		false	"Page size"						minimum(0)																default(10)
+//	@Param			sort	query		string	false	"Sortable column name"			Enums(title, -title, created_at, -created_at, updated_at, -updated_at)	default(-created_at)
+//	@Param			title	query		string	false	"Resume title"
+//	@Failure		400		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Success		200		{object}	models.ResumesResBody
+//	@Router			/resumes [get]
+func (h *Handler) Resumes(c *gin.Context) {
+	userId := c.MustGet("userId").(string)
+
+	uuid, err := utils.ToUUID(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	var queryParams models.ResumesQueryParams
+
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if c.Query("size") == "" {
+		queryParams.Size = 10
+	}
+
+	if c.Query("sort") == "" {
+		queryParams.Sort = models.CreatedAtDesc
+	}
+
+	resumes, err := h.queries.GetResumes(h.ctx, db.GetResumesParams{
+		UserID: uuid,
+
+		Limit:  int32(queryParams.Size),
+		Offset: int32(queryParams.Page * queryParams.Size),
+
+		TitleAsc:      queryParams.Sort == models.TitleAsc,
+		TitleDesc:     queryParams.Sort == models.TitleDesc,
+		CreatedAtAsc:  queryParams.Sort == models.CreatedAtAsc,
+		CreatedAtDesc: queryParams.Sort == models.CreatedAtDesc,
+		UpdatedAtAsc:  queryParams.Sort == models.UpdatedAtAsc,
+		UpdatedAtDesc: queryParams.Sort == models.UpdatedAtDesc,
+
+		Title: queryParams.Title,
+	})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	resBody := models.NewResumesResBody(queryParams.Page, queryParams.Size, resumes)
+
+	c.JSON(http.StatusOK, resBody)
+}
 
 func (h *Handler) Resume(c *gin.Context) {}
 
@@ -71,7 +142,6 @@ func (h *Handler) UpdateResume(c *gin.Context) {}
 //	@Description	Deletes an existing resume
 //
 //	@Security		BearerAuth
-//
 //	@Tags			Resume
 //	@Accept			json
 //	@Produce		json

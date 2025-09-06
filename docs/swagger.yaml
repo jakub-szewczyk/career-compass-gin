@@ -246,6 +246,22 @@ definitions:
     - password
     - passwordResetToken
     type: object
+  models.ResumesResBody:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.resumeEntry'
+        type: array
+      page:
+        example: 0
+        type: integer
+      size:
+        example: 10
+        type: integer
+      total:
+        example: 100
+        type: integer
+    type: object
   models.SignInReqBody:
     properties:
       email:
@@ -410,6 +426,17 @@ definitions:
         allOf:
         - $ref: '#/definitions/db.Status'
         example: IN_PROGRESS
+    type: object
+  models.resumeEntry:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
     type: object
 info:
   contact: {}
@@ -778,6 +805,60 @@ paths:
       tags:
       - Profile
   /resumes:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of resumes with support for sorting, filtering,
+        and pagination
+      parameters:
+      - default: 0
+        description: Page number (zero-indexed)
+        in: query
+        minimum: 0
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        minimum: 0
+        name: size
+        type: integer
+      - default: -created_at
+        description: Sortable column name
+        enum:
+        - title
+        - -title
+        - created_at
+        - -created_at
+        - updated_at
+        - -updated_at
+        in: query
+        name: sort
+        type: string
+      - description: Resume title
+        in: query
+        name: title
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResumesResBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Get resumes
+      tags:
+      - Resume
     post:
       consumes:
       - application/json

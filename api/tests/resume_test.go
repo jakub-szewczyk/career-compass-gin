@@ -12,8 +12,233 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestResumes(t *testing.T) {
+	queries.Purge(ctx)
+
+	setUpUser(ctx)
+
+	user, _ := queries.GetUserByEmail(ctx, "jakub.szewczyk@test.com")
+
+	resume1, _ := queries.CreateResume(ctx, db.CreateResumeParams{
+		UserID: user.ID,
+		Title:  "Resume A",
+	})
+	resume2, _ := queries.CreateResume(ctx, db.CreateResumeParams{
+		UserID: user.ID,
+		Title:  "Resume C",
+	})
+	resume3, _ := queries.CreateResume(ctx, db.CreateResumeParams{
+		UserID: user.ID,
+		Title:  "Resume B",
+	})
+
+	t.Run("valid request - default query params", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 0, resBodyRaw.Page)
+		assert.Equal(t, 10, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.Equal(t, resume3.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[2].ID)
+	})
+
+	t.Run("valid request - pagination", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?page=1&size=1", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 1, resBodyRaw.Page)
+		assert.Equal(t, 1, resBodyRaw.Size)
+		assert.Equal(t, 3, resBodyRaw.Total)
+
+		assert.Len(t, resBodyRaw.Data, 1)
+
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[0].ID)
+	})
+
+	t.Run("valid request - filter by title", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?title=Resume A", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Equal(t, 1, resBodyRaw.Total)
+
+		assert.Len(t, resBodyRaw.Data, 1)
+
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[0].ID)
+	})
+
+	t.Run("valid request - sort ascending by title", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?sort=title", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, resume3.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[2].ID)
+	})
+
+	t.Run("valid request - sort descending by title", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?sort=-title", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, resume3.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[2].ID)
+	})
+
+	t.Run("valid request - sort ascending by date created", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?sort=created_at", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, resume3.ID.String(), resBodyRaw.Data[2].ID)
+	})
+
+	t.Run("valid request - sort descending by date created", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?sort=-created_at", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.Equal(t, resume3.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[2].ID)
+	})
+
+	t.Run("valid request - sort ascending by last modified", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?sort=updated_at", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, resume3.ID.String(), resBodyRaw.Data[2].ID)
+	})
+
+	t.Run("valid request - sort descending by last modified", func(t *testing.T) {
+		w := httptest.NewRecorder()
+
+		req, _ := http.NewRequest("GET", "/api/resumes?sort=-updated_at", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+
+		r.ServeHTTP(w, req)
+
+		var resBodyRaw models.ResumesResBody
+		err := json.Unmarshal(w.Body.Bytes(), &resBodyRaw)
+
+		assert.NoError(t, err, "error unmarshaling response body")
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		assert.Len(t, resBodyRaw.Data, 3)
+
+		assert.Equal(t, resume3.ID.String(), resBodyRaw.Data[0].ID)
+		assert.Equal(t, resume2.ID.String(), resBodyRaw.Data[1].ID)
+		assert.Equal(t, resume1.ID.String(), resBodyRaw.Data[2].ID)
+	})
+}
+
 func TestCreateResume(t *testing.T) {
-	t.Run("inavlid request - unauthorized", func(t *testing.T) {
+	t.Run("invalid request - unauthorized", func(t *testing.T) {
 		queries.Purge(ctx)
 
 		setUpUser(ctx)
