@@ -246,6 +246,21 @@ definitions:
     - password
     - passwordResetToken
     type: object
+  models.ResumeResBody:
+    properties:
+      createdAt:
+        example: "2025-03-18T20:04:01Z"
+        type: string
+      id:
+        example: f4d15edc-e780-42b5-957d-c4352401d9ca
+        type: string
+      title:
+        example: Evil Corp Inc. personalized
+        type: string
+      updatedAt:
+        example: "2025-03-18T20:04:01Z"
+        type: string
+    type: object
   models.ResumesResBody:
     properties:
       data:
@@ -915,6 +930,36 @@ paths:
       security:
       - BearerAuth: []
       summary: Delete a resume
+      tags:
+      - Resume
+    get:
+      consumes:
+      - application/json
+      description: Fetches the details of a specific resume by its id
+      parameters:
+      - description: Resume uuid
+        in: path
+        name: resumeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResumeResBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - BearerAuth: []
+      summary: Retrieve resume details
       tags:
       - Resume
   /sign-in:

@@ -426,6 +426,34 @@ func (q *Queries) GetPasswordResetToken(ctx context.Context, token string) (GetP
 	return i, err
 }
 
+const getResume = `-- name: GetResume :one
+SELECT id, title, created_at, updated_at FROM resumes WHERE id = $1 AND user_id = $2
+`
+
+type GetResumeParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID pgtype.UUID `json:"userId"`
+}
+
+type GetResumeRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Title     string             `json:"title"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
+}
+
+func (q *Queries) GetResume(ctx context.Context, arg GetResumeParams) (GetResumeRow, error) {
+	row := q.db.QueryRow(ctx, getResume, arg.ID, arg.UserID)
+	var i GetResumeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getResumes = `-- name: GetResumes :many
 SELECT id, title, created_at, updated_at, COUNT(*) OVER() AS total FROM resumes
 WHERE

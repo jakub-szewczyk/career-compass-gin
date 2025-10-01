@@ -82,7 +82,55 @@ func (h *Handler) Resumes(c *gin.Context) {
 	c.JSON(http.StatusOK, resBody)
 }
 
-func (h *Handler) Resume(c *gin.Context) {}
+// Resume godoc
+//
+//	@Summary		Retrieve resume details
+//	@Description	Fetches the details of a specific resume by its id
+//
+//	@Security		BearerAuth
+//
+//	@Tags			Resume
+//	@Accept			json
+//	@Produce		json
+//	@Param			resumeId	path		string	true	"Resume uuid"
+//	@Success		200			{object}	models.ResumeResBody
+//	@Failure		404			{object}	models.Error
+//	@Failure		500			{object}	models.Error
+//	@Router			/resumes/{resumeId} [get]
+func (h *Handler) Resume(c *gin.Context) {
+	userId := c.MustGet("userId").(string)
+
+	uuid, err := utils.ToUUID(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	resumeId, err := utils.ToUUID(c.Param("resumeId"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	resume, err := h.queries.GetResume(h.ctx, db.GetResumeParams{
+		ID:     resumeId,
+		UserID: uuid,
+	})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	resBody := models.NewResumeResBody(resume)
+
+	c.JSON(http.StatusOK, resBody)
+}
 
 // CreateResume godoc
 //
@@ -134,6 +182,7 @@ func (h *Handler) CreateResume(c *gin.Context) {
 	c.JSON(http.StatusCreated, resBody)
 }
 
+// TODO: Implement
 func (h *Handler) UpdateResume(c *gin.Context) {}
 
 // DeleteResume godoc

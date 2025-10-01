@@ -422,9 +422,9 @@ func TestDeleteResume(t *testing.T) {
 		assert.NotEmpty(t, resBodyRaw.ID, "missing resume id")
 		assert.Equal(t, title, resBodyRaw.Title)
 
-		// TODO: Uncomment once `queries.GetResumes` is implemented
-		// resumes, err := queries.GetResumes(ctx, db.GetResumesParams{})
-		// assert.Len(t, resumes, 0)
+		resumes, _ := queries.GetResumes(ctx, db.GetResumesParams{UserID: user.ID})
+
+		assert.Len(t, resumes, 0)
 	})
 
 	t.Run("invalid request - unauthorized", func(t *testing.T) {

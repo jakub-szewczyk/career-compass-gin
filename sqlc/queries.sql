@@ -153,3 +153,6 @@ ORDER BY
   CASE WHEN @updated_at_asc::bool  THEN updated_at END ASC,
   CASE WHEN @updated_at_desc::bool THEN updated_at END DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+
+-- name: GetResume :one
+SELECT id, title, created_at, updated_at FROM resumes WHERE id = $1 AND user_id = $2;

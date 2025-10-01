@@ -688,6 +688,53 @@ const docTemplate = `{
             }
         },
         "/resumes/{resumeId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the details of a specific resume by its id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Retrieve resume details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resume uuid",
+                        "name": "resumeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResumeResBody"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -1177,6 +1224,27 @@ const docTemplate = `{
                 "passwordResetToken": {
                     "type": "string",
                     "example": "ec6c66fbd3d92b1ad44f21613c5ee2e82c3dd65e8c918945308087ce77b5fe47"
+                }
+            }
+        },
+        "models.ResumeResBody": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2025-03-18T20:04:01Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2025-03-18T20:04:01Z"
                 }
             }
         },

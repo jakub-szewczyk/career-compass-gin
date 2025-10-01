@@ -89,3 +89,19 @@ type DeleteResumeResBody struct {
 func NewDeleteResumeResBody(resume db.DeleteResumeRow) DeleteResumeResBody {
 	return DeleteResumeResBody{ID: resume.ID.String(), Title: resume.Title}
 }
+
+type ResumeResBody struct {
+	ID        string    `json:"id" example:"f4d15edc-e780-42b5-957d-c4352401d9ca"`
+	Title     string    `json:"title" example:"Evil Corp Inc. personalized"`
+	CreatedAt time.Time `json:"createdAt" example:"2025-03-18T20:04:01Z"`
+	UpdatedAt time.Time `json:"updatedAt" example:"2025-03-18T20:04:01Z"`
+}
+
+func NewResumeResBody(resume db.GetResumeRow) ResumeResBody {
+	return ResumeResBody{
+		ID:        resume.ID.String(),
+		Title:     resume.Title,
+		CreatedAt: resume.CreatedAt.Time.UTC(),
+		UpdatedAt: resume.UpdatedAt.Time.UTC(),
+	}
+}
