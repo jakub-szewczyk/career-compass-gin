@@ -79,3 +79,18 @@ CREATE TRIGGER set_job_application_updated_at_timestamp
 BEFORE UPDATE ON job_applications
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at_timestamp();
+
+-- Resumes
+CREATE TABLE resumes (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
+  title           TEXT NOT NULL,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, title)
+);
+
+CREATE TRIGGER set_resume_updated_at_timestamp
+BEFORE UPDATE ON resumes
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_timestamp();

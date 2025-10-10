@@ -80,7 +80,7 @@ func main() {
 
 	queries := db.New(pool)
 
-	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL, emailVerificationURL, resetPasswordURL), queries)
+	r := routes.Setup(ctx, handlers.NewEnv(port, databaseURL, jwtSecret, smtpIdentity, smtpUsername, smtpPassword, smtpHost, smtpPort, frontendURL, emailVerificationURL, resetPasswordURL), queries, pool)
 
 	err = r.Run(":" + port)
 	if err != nil {

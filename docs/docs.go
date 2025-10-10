@@ -329,12 +329,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.DeleteJobApplicationResBody"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.Error"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -566,6 +560,223 @@ const docTemplate = `{
                 }
             }
         },
+        "/resumes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of resumes with support for sorting, filtering, and pagination",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Get resumes",
+                "parameters": [
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Page number (zero-indexed)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "title",
+                            "-title",
+                            "created_at",
+                            "-created_at",
+                            "updated_at",
+                            "-updated_at"
+                        ],
+                        "type": "string",
+                        "default": "-created_at",
+                        "description": "Sortable column name",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resume title",
+                        "name": "title",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResumesResBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generates a new resume. If no title is provided, a default one will be used.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Generate a new resume",
+                "parameters": [
+                    {
+                        "description": "Resume details",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateResumeReqBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateResumeResBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/resumes/{resumeId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the details of a specific resume by its id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Retrieve resume details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resume uuid",
+                        "name": "resumeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResumeResBody"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing resume",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Delete a resume",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resume uuid",
+                        "name": "resumeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeleteResumeResBody"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/sign-in": {
             "post": {
                 "description": "Authenticates a user and returns a JWT token for session management. Valid credentials are required to access the system.",
@@ -782,6 +993,28 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CreateResumeReqBody": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
+                }
+            }
+        },
+        "models.CreateResumeResBody": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
+                }
+            }
+        },
         "models.DeleteJobApplicationResBody": {
             "type": "object",
             "properties": {
@@ -828,6 +1061,19 @@ const docTemplate = `{
                         }
                     ],
                     "example": "IN_PROGRESS"
+                }
+            }
+        },
+        "models.DeleteResumeResBody": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
                 }
             }
         },
@@ -978,6 +1224,50 @@ const docTemplate = `{
                 "passwordResetToken": {
                     "type": "string",
                     "example": "ec6c66fbd3d92b1ad44f21613c5ee2e82c3dd65e8c918945308087ce77b5fe47"
+                }
+            }
+        },
+        "models.ResumeResBody": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2025-03-18T20:04:01Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "f4d15edc-e780-42b5-957d-c4352401d9ca"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Evil Corp Inc. personalized"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2025-03-18T20:04:01Z"
+                }
+            }
+        },
+        "models.ResumesResBody": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.resumeEntry"
+                    }
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "size": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },
@@ -1212,6 +1502,23 @@ const docTemplate = `{
                         }
                     ],
                     "example": "IN_PROGRESS"
+                }
+            }
+        },
+        "models.resumeEntry": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         }

@@ -85,6 +85,35 @@ func (q *Queries) CreatePasswordResetToken(ctx context.Context, userID pgtype.UU
 	return token, err
 }
 
+const createResume = `-- name: CreateResume :one
+INSERT INTO resumes (user_id, title)
+VALUES (
+  $1,
+  COALESCE(
+    NULLIF($2, ''),
+    (SELECT 'Untitled ' || (COUNT(*) + 1)::text FROM resumes WHERE user_id = $1)
+  )
+)
+RETURNING id, title
+`
+
+type CreateResumeParams struct {
+	UserID pgtype.UUID `json:"userId"`
+	Title  interface{} `json:"title"`
+}
+
+type CreateResumeRow struct {
+	ID    pgtype.UUID `json:"id"`
+	Title string      `json:"title"`
+}
+
+func (q *Queries) CreateResume(ctx context.Context, arg CreateResumeParams) (CreateResumeRow, error) {
+	row := q.db.QueryRow(ctx, createResume, arg.UserID, arg.Title)
+	var i CreateResumeRow
+	err := row.Scan(&i.ID, &i.Title)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 WITH new_user AS (
   INSERT INTO users (first_name, last_name, email, password)
@@ -192,6 +221,27 @@ DELETE FROM password_reset_tokens WHERE token = $1
 func (q *Queries) DeletePasswordResetToken(ctx context.Context, token string) error {
 	_, err := q.db.Exec(ctx, deletePasswordResetToken, token)
 	return err
+}
+
+const deleteResume = `-- name: DeleteResume :one
+DELETE FROM resumes WHERE id = $1 AND user_id = $2 RETURNING id, title
+`
+
+type DeleteResumeParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID pgtype.UUID `json:"userId"`
+}
+
+type DeleteResumeRow struct {
+	ID    pgtype.UUID `json:"id"`
+	Title string      `json:"title"`
+}
+
+func (q *Queries) DeleteResume(ctx context.Context, arg DeleteResumeParams) (DeleteResumeRow, error) {
+	row := q.db.QueryRow(ctx, deleteResume, arg.ID, arg.UserID)
+	var i DeleteResumeRow
+	err := row.Scan(&i.ID, &i.Title)
+	return i, err
 }
 
 const expireVerificationToken = `-- name: ExpireVerificationToken :exec
@@ -376,6 +426,107 @@ func (q *Queries) GetPasswordResetToken(ctx context.Context, token string) (GetP
 	return i, err
 }
 
+const getResume = `-- name: GetResume :one
+SELECT id, title, created_at, updated_at FROM resumes WHERE id = $1 AND user_id = $2
+`
+
+type GetResumeParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID pgtype.UUID `json:"userId"`
+}
+
+type GetResumeRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Title     string             `json:"title"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
+}
+
+func (q *Queries) GetResume(ctx context.Context, arg GetResumeParams) (GetResumeRow, error) {
+	row := q.db.QueryRow(ctx, getResume, arg.ID, arg.UserID)
+	var i GetResumeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getResumes = `-- name: GetResumes :many
+SELECT id, title, created_at, updated_at, COUNT(*) OVER() AS total FROM resumes
+WHERE
+  user_id = $1
+  AND (title ILIKE '%' || COALESCE($2::text, '') || '%')
+ORDER BY
+  CASE WHEN $3::bool       THEN title END ASC,
+  CASE WHEN $4::bool      THEN title END DESC,
+  CASE WHEN $5::bool  THEN created_at END ASC,
+  CASE WHEN $6::bool THEN created_at END DESC,
+  CASE WHEN $7::bool  THEN updated_at END ASC,
+  CASE WHEN $8::bool THEN updated_at END DESC
+LIMIT $10 OFFSET $9
+`
+
+type GetResumesParams struct {
+	UserID        pgtype.UUID `json:"userId"`
+	Title         string      `json:"title"`
+	TitleAsc      bool        `json:"titleAsc"`
+	TitleDesc     bool        `json:"titleDesc"`
+	CreatedAtAsc  bool        `json:"createdAtAsc"`
+	CreatedAtDesc bool        `json:"createdAtDesc"`
+	UpdatedAtAsc  bool        `json:"updatedAtAsc"`
+	UpdatedAtDesc bool        `json:"updatedAtDesc"`
+	Offset        int32       `json:"offset"`
+	Limit         int32       `json:"limit"`
+}
+
+type GetResumesRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Title     string             `json:"title"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
+	Total     int64              `json:"total"`
+}
+
+func (q *Queries) GetResumes(ctx context.Context, arg GetResumesParams) ([]GetResumesRow, error) {
+	rows, err := q.db.Query(ctx, getResumes,
+		arg.UserID,
+		arg.Title,
+		arg.TitleAsc,
+		arg.TitleDesc,
+		arg.CreatedAtAsc,
+		arg.CreatedAtDesc,
+		arg.UpdatedAtAsc,
+		arg.UpdatedAtDesc,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetResumesRow
+	for rows.Next() {
+		var i GetResumesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT u.id, u.first_name, u.last_name, u.email, u.is_email_verified, v.token as verification_token
 FROM users AS u
@@ -475,7 +626,7 @@ func (q *Queries) GetVerificationToken(ctx context.Context, userID pgtype.UUID) 
 }
 
 const purge = `-- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications, resumes
 `
 
 func (q *Queries) Purge(ctx context.Context) error {

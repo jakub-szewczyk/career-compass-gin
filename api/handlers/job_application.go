@@ -284,7 +284,6 @@ func (h *Handler) UpdateJobApplication(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			jobApplicationId	path		string	true	"Job application uuid"
-//	@Failure		400					{object}	models.Error
 //	@Failure		500					{object}	models.Error
 //	@Success		200					{object}	models.DeleteJobApplicationResBody
 //	@Router			/job-applications/{jobApplicationId} [delete]

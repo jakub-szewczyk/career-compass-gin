@@ -1,5 +1,5 @@
 -- name: Purge :exec
-TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications;
+TRUNCATE TABLE users, verification_tokens, password_reset_tokens, job_applications, resumes;
 
 -- name: CreateUser :one
 WITH new_user AS (
@@ -125,3 +125,34 @@ RETURNING id, company_name, job_title, date_applied, status, is_replied, min_sal
 -- name: DeleteJobApplication :one
 DELETE FROM job_applications WHERE id = $1 AND user_id = $2
 RETURNING id, company_name, job_title, date_applied, status, is_replied, min_salary, max_salary, job_posting_url, notes;
+
+-- name: CreateResume :one
+INSERT INTO resumes (user_id, title)
+VALUES (
+  sqlc.arg(user_id),
+  COALESCE(
+    NULLIF(sqlc.arg(title), ''),
+    (SELECT 'Untitled ' || (COUNT(*) + 1)::text FROM resumes WHERE user_id = sqlc.arg(user_id))
+  )
+)
+RETURNING id, title;
+
+-- name: DeleteResume :one
+DELETE FROM resumes WHERE id = $1 AND user_id = $2 RETURNING id, title;
+
+-- name: GetResumes :many
+SELECT id, title, created_at, updated_at, COUNT(*) OVER() AS total FROM resumes
+WHERE
+  user_id = @user_id
+  AND (title ILIKE '%' || COALESCE(@title::text, '') || '%')
+ORDER BY
+  CASE WHEN @title_asc::bool       THEN title END ASC,
+  CASE WHEN @title_desc::bool      THEN title END DESC,
+  CASE WHEN @created_at_asc::bool  THEN created_at END ASC,
+  CASE WHEN @created_at_desc::bool THEN created_at END DESC,
+  CASE WHEN @updated_at_asc::bool  THEN updated_at END ASC,
+  CASE WHEN @updated_at_desc::bool THEN updated_at END DESC
+LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+
+-- name: GetResume :one
+SELECT id, title, created_at, updated_at FROM resumes WHERE id = $1 AND user_id = $2;
